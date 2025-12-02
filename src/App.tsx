@@ -1,5 +1,5 @@
 import { useState } from "react";
-//import { Button } from '@toss/tds-mobile';
+import { Button } from '@toss/tds-mobile';
 
 type Screen = "home" | "profile" | "todayFortune" | "premiumReport";
 
@@ -96,12 +96,12 @@ function HomeScreen(props: {
             ? `${profile.nickname} 님의 오늘 연애 운세를 준비했어요.`
             : "연애 프로필을 입력하면 더 정확한 운세를 볼 수 있어요."}
         </p>
-        <button style={styles.primaryButton} onClick={onGoTodayFortune}>
+        <Button onClick={onGoTodayFortune}>
           오늘 운세 보기
-        </button>
-        <button style={styles.secondaryButton} onClick={onGoProfile}>
+        </Button>
+        <Button variant="weak" onClick={onGoProfile}>
           연애 프로필 설정
-        </button>
+        </Button>
       </div>
     </div>
   );
