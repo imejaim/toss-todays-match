@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '오늘의 짝궁',
     primaryColor: '#A88BFF',
-    icon: '',              // 나중에 URL 넣어도 됨. 지금은 빈 값 가능
+    icon: 'https://raw.githubusercontent.com/imejaim/toss-todays-match/main/public/icon.svg',
     bridgeColorMode: 'basic',
   },
   web: {
