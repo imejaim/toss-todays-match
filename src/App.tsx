@@ -1,61 +1,77 @@
 import { useState } from "react";
-import { Button } from '@toss/tds-mobile';
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { ProfileScreen } from "./pages/Profile";
 import { defaultProfile } from "./types";
 import type { UserProfile, FortuneResult } from "./types";
 
-type Screen = "home" | "profile" | "todayFortune" | "premiumReport";
-
 import { TodayFortuneScreen } from "./pages/TodayFortune";
+import { PremiumReportScreen } from "./pages/PremiumReport";
 import { calcTodayFortune } from "./utils/fortune";
 
 function App() {
-  const [screen, setScreen] = useState<Screen>("home");
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [fortune, setFortune] = useState<FortuneResult | null>(null);
+  const navigate = useNavigate();
 
   const moveToTodayFortune = () => {
-    // 아주 간단한 가짜 운세 로직 (나중에 교체 예정)
     const result = calcTodayFortune(profile);
     setFortune(result);
-    setScreen("todayFortune");
+    navigate("/today-fortune"); // 라우터 이동
   };
 
   return (
     <div style={styles.app}>
-      {screen === "home" && (
-        <HomeScreen
-          profile={profile}
-          onGoProfile={() => setScreen("profile")}
-          onGoTodayFortune={moveToTodayFortune}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomeScreen
+              profile={profile}
+              onGoProfile={() => navigate("/profile")}
+              onGoTodayFortune={moveToTodayFortune}
+            />
+          }
         />
-      )}
-
-      {screen === "profile" && (
-        <ProfileScreen
-          initialProfile={profile}
-          onChange={setProfile}
-          onSaveAndNext={moveToTodayFortune}
-          onBack={() => setScreen("home")}
+        <Route
+          path="/profile"
+          element={
+            <ProfileScreen
+              initialProfile={profile}
+              onChange={setProfile}
+              onSaveAndNext={moveToTodayFortune}
+              onBack={() => navigate("/")}
+            />
+          }
         />
-      )}
-
-      {screen === "todayFortune" && fortune && (
-        <TodayFortuneScreen
-          profile={profile}
-          fortune={fortune}
-          onGoPremium={() => setScreen("premiumReport")}
-          onBackHome={() => setScreen("home")}
+        <Route
+          path="/today-fortune"
+          element={
+            fortune ? (
+              <TodayFortuneScreen
+                profile={profile}
+                fortune={fortune}
+                onGoPremium={() => navigate("/premium-report")}
+                onBackHome={() => navigate("/")}
+              />
+            ) : (
+              // 운세 데이터가 없으면 홈으로 리다이렉트 (안전장치)
+              <div style={{ padding: 20 }}>
+                Loading... <button onClick={() => navigate("/")}>Go Home</button>
+              </div>
+            )
+          }
         />
-      )}
-
-      {screen === "premiumReport" && (
-        <PremiumReportScreen
-          profile={profile}
-          fortune={fortune}
-          onBackToday={() => setScreen("todayFortune")}
+        <Route
+          path="/premium-report"
+          element={
+            <PremiumReportScreen
+              profile={profile}
+              fortune={fortune}
+              onBackToday={() => navigate("/today-fortune")}
+            />
+          }
         />
-      )}
+      </Routes>
     </div>
   );
 }
@@ -89,14 +105,6 @@ function HomeScreen(props: {
     </div>
   );
 }
-
-import { PremiumReportScreen } from "./pages/PremiumReport";
-
-// ... (existing imports)
-
-// ... (App component)
-
-// ... (HomeScreen component)
 
 
 /** ----- 매우 간단한 스타일 ----- */
