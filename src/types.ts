@@ -4,6 +4,7 @@ export type RelationshipStatus = "single" | "dating" | "married" | "complicated"
 export interface UserProfile {
     nickname: string;
     birthDate: string; // YYYY-MM-DD
+    birthTime: string; // HH:mm or "unknown"
     gender: Gender;
     relationshipStatus: RelationshipStatus;
 }
@@ -17,6 +18,7 @@ export interface FortuneResult {
 export const defaultProfile: UserProfile = {
     nickname: "",
     birthDate: "",
+    birthTime: "",
     gender: "",
     relationshipStatus: "",
 };

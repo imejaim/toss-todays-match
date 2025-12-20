@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@toss/tds-mobile";
 import type { UserProfile, Gender, RelationshipStatus } from "../types";
 
 interface Props {
@@ -60,15 +59,32 @@ export function ProfileScreen({ initialProfile, onChange, onSaveAndNext, onBack 
                     />
                 </div>
 
-                {/* 2. Birthdate */}
+                {/* 2. Birthdate & Time */}
                 <div style={styles.field}>
-                    <label style={styles.label}>생년월일</label>
-                    <input
-                        style={styles.input}
-                        type="date"
-                        value={localProfile.birthDate}
-                        onChange={(e) => update({ birthDate: e.target.value })}
-                    />
+                    <label style={styles.label}>생년월일 및 태어난 시간</label>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <input
+                            style={{ ...styles.input, flex: 2 }}
+                            type="date"
+                            value={localProfile.birthDate}
+                            onChange={(e) => update({ birthDate: e.target.value })}
+                        />
+                        <input
+                            style={{ ...styles.input, flex: 1 }}
+                            type="time"
+                            disabled={localProfile.birthTime === "unknown"}
+                            value={localProfile.birthTime === "unknown" ? "" : localProfile.birthTime}
+                            onChange={(e) => update({ birthTime: e.target.value })}
+                        />
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#6b7684", marginTop: 4, cursor: "pointer" }}>
+                        <input
+                            type="checkbox"
+                            checked={localProfile.birthTime === "unknown"}
+                            onChange={(e) => update({ birthTime: e.target.checked ? "unknown" : "" })}
+                        />
+                        태어난 시간 모름
+                    </label>
                 </div>
 
                 {/* 3. Gender */}

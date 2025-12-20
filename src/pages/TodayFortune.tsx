@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }: Props) {
-    const nameLabel = profile.nickname || "오늘의 짝궁";
+    const nameLabel = profile.nickname || "오늘의 짝꿍";
 
     return (
         <div style={styles.page}>

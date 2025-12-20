@@ -86,7 +86,7 @@ function HomeScreen(props: {
 
   return (
     <div style={styles.page}>
-      <h1 style={styles.title}>오늘의 짝궁</h1>
+      <h1 style={styles.title}>오늘의 짝꿍</h1>
       <p style={styles.subtitle}>오늘 나의 연애 운세를 확인해 보세요.</p>
 
       <div style={styles.card}>
