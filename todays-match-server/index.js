@@ -42,7 +42,7 @@ app.post('/api/fortune', async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const prompt = `
 역할: 당신은 2030 세대에게 인기 있는 신통방통한 AI 연애 상담사입니다.
