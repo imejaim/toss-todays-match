@@ -3,7 +3,7 @@ import { defineConfig } from '@apps-in-toss/web-framework/config';
 export default defineConfig({
   appName: 'todays-match',
   brand: {
-    displayName: '오늘의 짝궁',
+    displayName: '오늘의 짝꿍',
     primaryColor: '#A88BFF',
     icon: 'https://raw.githubusercontent.com/imejaim/toss-todays-match/main/public/icon.svg',
     bridgeColorMode: 'basic',

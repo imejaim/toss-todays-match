@@ -1,7 +1,7 @@
 {
   "name": "todays-match-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "granite dev",
@@ -13,6 +13,7 @@
   "dependencies": {
     "@apps-in-toss/web-framework": "^1.5.1",
     "@emotion/react": "^11.14.0",
+    "@google/generative-ai": "^0.24.1",
     "@toss/tds-mobile": "^2.1.2",
     "@toss/tds-mobile-ait": "^2.1.2",
     "react": "^18.3.1",
