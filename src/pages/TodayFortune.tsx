@@ -15,11 +15,7 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 110 }}>
-            <div style={{ padding: "12px 20px", display: "flex", alignItems: "center" }}>
-                <button onClick={onBackHome} style={{ border: "none", background: "none", fontSize: 24, cursor: "pointer", color: "#191f28" }}>
-                    &larr;
-                </button>
-            </div>
+
 
             <div style={{ padding: "0 24px", textAlign: "center" }}>
                 <h1 style={{ fontSize: 22, fontWeight: 700, margin: "24px 0 32px", color: "#191f28" }}>

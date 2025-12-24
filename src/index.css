@@ -3,7 +3,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light; /* Enforce light mode */
+  color-scheme: light;
+  /* Enforce light mode */
   color: #213547;
   background-color: #ffffff;
 
@@ -15,10 +16,17 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
+  /* Changed from flex to block to avoid centering issues affecting layout */
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+#root {
+  width: 100%;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -37,11 +45,12 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
-

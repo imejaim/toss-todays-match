@@ -80,7 +80,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
         <div style={{ backgroundColor: "#f9fafb", minHeight: "100vh", paddingBottom: 100 }}>
             {/* Header */}
             <header style={styles.header}>
-                <button onClick={onBackToday} style={styles.backButton}>&larr;</button>
+
                 <span style={styles.headerTitle}>심층 리포트</span>
                 <div style={{ width: 24 }} />
             </header>
