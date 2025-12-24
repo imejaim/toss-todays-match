@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 
 // 테스트용 가짜 AdMob 객체 (웹 개발을 위해)
 const MockGoogleAdMob = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     loadAppsInTossAdMob: ({ onEvent }: any) => {
         console.log("[AdMock] Loading Ad...");
         setTimeout(() => {
@@ -11,6 +12,7 @@ const MockGoogleAdMob = {
         }, 1500);
         return () => { };
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     showAppsInTossAdMob: ({ onEvent }: any) => {
         console.log("[AdMock] Showing Ad...");
         setTimeout(() => {
@@ -53,11 +55,13 @@ export function useRewardedAd() {
             options: {
                 adGroupId: TEST_AD_GROUP_ID,
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onEvent: (event: any) => {
                 if (event.type === 'loaded') {
                     setLoading(false);
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onError: (error: any) => {
                 console.error('광고 로드 실패', error);
                 setLoading(false); // 에러나면 로딩 끝내서 버튼 활성화라도 시키거나 처리 필요
@@ -82,6 +86,7 @@ export function useRewardedAd() {
             options: {
                 adGroupId: TEST_AD_GROUP_ID,
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onEvent: (event: any) => {
                 switch (event.type) {
                     case 'dismissed':
@@ -94,6 +99,7 @@ export function useRewardedAd() {
                         break;
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onError: (error: any) => {
                 console.error('광고 보여주기 실패', error);
             },

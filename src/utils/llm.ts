@@ -66,6 +66,7 @@ export async function getDetailedFortune(profile: Profile, fortune: FortuneData)
             throw new Error("Empty result from server");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error("Backend API Error:", error);
 

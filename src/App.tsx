@@ -7,6 +7,9 @@ import type { UserProfile, FortuneResult } from "./types";
 
 import { TodayFortuneScreen } from "./pages/TodayFortune";
 import { PremiumReportScreen } from "./pages/PremiumReport";
+
+import { TermsScreen } from "./pages/Terms";
+import { PrivacyScreen } from "./pages/Privacy";
 import { calcTodayFortune } from "./utils/fortune";
 
 function App() {
@@ -52,6 +55,7 @@ function App() {
       if (profile.nickname) {
         // 프로필이 있으면 운세 계산 후 보여줌
         const result = calcTodayFortune(profile);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFortune(result);
       } else {
         // 프로필이 없으면 프로필 입력 화면으로 유도
@@ -114,6 +118,15 @@ function App() {
               <div style={{ padding: 20 }}>Loading...</div>
             )
           }
+        />
+
+        <Route
+          path="/terms"
+          element={<TermsScreen />}
+        />
+        <Route
+          path="/privacy"
+          element={<PrivacyScreen />}
         />
       </Routes>
     </div>

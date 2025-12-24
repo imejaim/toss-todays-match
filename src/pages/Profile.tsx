@@ -14,7 +14,7 @@ interface Props {
     onBack: () => void;
 }
 
-export function ProfileScreen({ initialProfile, onChange, onSaveAndNext, onBack }: Props) {
+export function ProfileScreen({ initialProfile, onChange, onSaveAndNext }: Props) {
     const [localProfile, setLocalProfile] = useState<UserProfile>(initialProfile);
 
     // Load from localStorage on mount
@@ -51,11 +51,7 @@ export function ProfileScreen({ initialProfile, onChange, onSaveAndNext, onBack 
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 120 }}>
-            <div style={{ padding: "12px 20px", display: "flex", alignItems: "center" }}>
-                <button onClick={onBack} style={{ border: "none", background: "none", fontSize: 24, cursor: "pointer", color: "#191f28" }}>
-                    &larr;
-                </button>
-            </div>
+
 
             <div style={{ padding: "0 24px" }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, marginTop: 24, marginBottom: 8, color: "#191f28" }}>
