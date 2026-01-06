@@ -9,35 +9,27 @@ import {
 
 interface Props {
     initialProfile: UserProfile;
-    onChange: (profile: UserProfile) => void;
-    onSaveAndNext: () => void;
-    onBack: () => void;
+    onSave: (profile: UserProfile) => void;
+    onBack?: () => void;
+    title?: string;
+    ctaLabel?: string;
 }
 
-export function ProfileScreen({ initialProfile, onChange, onSaveAndNext }: Props) {
+export function ProfileScreen({
+    initialProfile,
+    onSave,
+    title = "연애 프로필",
+    ctaLabel = "저장하고 보러가기"
+}: Props) {
     const [localProfile, setLocalProfile] = useState<UserProfile>(initialProfile);
 
-    // Load from localStorage on mount
+    // Synchronize local state with initialProfile if it changes (important for edit)
     useEffect(() => {
-        const saved = localStorage.getItem("userProfile");
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Merge with defaults to ensure all fields exist
-                const merged = { ...initialProfile, ...parsed };
-                setLocalProfile(merged);
-                onChange(merged);
-            } catch (e) {
-                console.error("Failed to parse profile", e);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        setLocalProfile(initialProfile);
+    }, [initialProfile]);
 
     const update = (patch: Partial<UserProfile>) => {
-        const newProfile = { ...localProfile, ...patch };
-        setLocalProfile(newProfile);
-        onChange(newProfile);
+        setLocalProfile(prev => ({ ...prev, ...patch }));
     };
 
     const handleSave = () => {
@@ -45,20 +37,17 @@ export function ProfileScreen({ initialProfile, onChange, onSaveAndNext }: Props
             alert("닉네임을 입력해주세요!");
             return;
         }
-        localStorage.setItem("userProfile", JSON.stringify(localProfile));
-        onSaveAndNext();
+        onSave(localProfile);
     };
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 120 }}>
-
-
             <div style={{ padding: "0 24px" }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, marginTop: 24, marginBottom: 8, color: "#191f28" }}>
-                    연애 프로필
+                    {title}
                 </h1>
                 <p style={{ fontSize: 16, color: "#4e5968", marginBottom: 32 }}>
-                    더 정확한 운세를 위해 정보를 입력해주세요.
+                    더 정확한 분석을 위해 정보를 입력해주세요.
                 </p>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -149,7 +138,7 @@ export function ProfileScreen({ initialProfile, onChange, onSaveAndNext }: Props
             </div>
 
             <FixedBottomCTA onClick={handleSave}>
-                저장하고 운세 보러가기
+                {ctaLabel}
             </FixedBottomCTA>
         </div>
     );

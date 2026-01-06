@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { Button } from "./components/ui";
+import { Routes, Route, useNavigate, useLocation, useParams } from "react-router-dom";
 import { ProfileScreen } from "./pages/Profile";
 import { defaultProfile } from "./types";
 import type { UserProfile, FortuneResult } from "./types";
@@ -11,29 +10,66 @@ import { PremiumReportScreen } from "./pages/PremiumReport";
 import { TermsScreen } from "./pages/Terms";
 import { PrivacyScreen } from "./pages/Privacy";
 import { calcTodayFortune } from "./utils/fortune";
+import Home from "./pages/Home";
 
 function App() {
-  // 1. 초기값 설정 시 LocalStorage 확인
+  // 1. My Profile State
   const [profile, setProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem("userProfile");
       if (saved) {
-        return { ...defaultProfile, ...JSON.parse(saved) };
+        return { ...defaultProfile, ...JSON.parse(saved), id: "me" };
       }
     } catch (e) {
       console.error("Failed to load profile", e);
     }
-    return defaultProfile;
+    return { ...defaultProfile, id: "me" };
+  });
+
+  // 2. Friends List State
+  const [friends, setFriends] = useState<UserProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem("friendsList");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Failed to load friends list", e);
+    }
+    return [];
   });
 
   const [fortune, setFortune] = useState<FortuneResult | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 2. 프로필 저장 함수 (상태 + 로컬스토리지)
-  const handleProfileChange = (newProfile: UserProfile) => {
-    setProfile(newProfile);
-    localStorage.setItem("userProfile", JSON.stringify(newProfile));
+  // 3. Storage Synced Setters
+  const handleProfileChange = (updatedProfile: UserProfile) => {
+    const finalProfile = { ...updatedProfile, id: "me" };
+    setProfile(finalProfile);
+    localStorage.setItem("userProfile", JSON.stringify(finalProfile));
+    navigate("/");
+  };
+
+  const handleAddFriend = (newFriend: UserProfile) => {
+    const friendWithId = { ...newFriend, id: Date.now().toString() };
+    const newList = [...friends, friendWithId];
+    setFriends(newList);
+    localStorage.setItem("friendsList", JSON.stringify(newList));
+    navigate("/");
+  };
+
+  const handleUpdateFriend = (updatedFriend: UserProfile) => {
+    const newList = friends.map(f => f.id === updatedFriend.id ? updatedFriend : f);
+    setFriends(newList);
+    localStorage.setItem("friendsList", JSON.stringify(newList));
+    navigate("/");
+  };
+
+  const handleDeleteFriend = (id: string) => {
+    const newList = friends.filter(f => f.id !== id);
+    setFriends(newList);
+    localStorage.setItem("friendsList", JSON.stringify(newList));
   };
 
   const moveToTodayFortune = () => {
@@ -43,23 +79,19 @@ function App() {
     }
     const result = calcTodayFortune(profile);
     setFortune(result);
-    navigate("/today-fortune"); // 라우터 이동
+    navigate("/today-fortune");
   };
 
-  // 3. 딥링크/새로고침 처리: URL이 결과 페이지인데 운세 데이터가 없으면 자동 계산
+  // 4. Persistence Effect
   useEffect(() => {
     const path = location.pathname;
     const isResultPage = path === "/today-fortune" || path === "/premium-report";
 
     if (isResultPage && !fortune) {
       if (profile.nickname) {
-        // 프로필이 있으면 운세 계산 후 보여줌
         const result = calcTodayFortune(profile);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFortune(result);
       } else {
-        // 프로필이 없으면 프로필 입력 화면으로 유도
-        // 약간의 딜레이를 주거나 바로 이동
         navigate("/profile", { replace: true });
       }
     }
@@ -71,10 +103,14 @@ function App() {
         <Route
           path="/"
           element={
-            <HomeScreen
+            <Home
               profile={profile}
+              friends={friends}
               onGoProfile={() => navigate("/profile")}
               onGoTodayFortune={moveToTodayFortune}
+              onAddFriend={() => navigate("/friends/add")}
+              onEditFriend={(id) => navigate(`/friends/edit/${id}`)}
+              onDeleteFriend={handleDeleteFriend}
             />
           }
         />
@@ -83,9 +119,29 @@ function App() {
           element={
             <ProfileScreen
               initialProfile={profile}
-              onChange={handleProfileChange}
-              onSaveAndNext={moveToTodayFortune}
-              onBack={() => navigate("/")}
+              onSave={handleProfileChange}
+              title="내 프로필 수정"
+              ctaLabel="저장하기"
+            />
+          }
+        />
+        <Route
+          path="/friends/add"
+          element={
+            <ProfileScreen
+              initialProfile={{ ...defaultProfile, id: "temp" }}
+              onSave={handleAddFriend}
+              title="새 꿍친 추가"
+              ctaLabel="추가하기"
+            />
+          }
+        />
+        <Route
+          path="/friends/edit/:id"
+          element={
+            <FriendEditWrapper
+              friends={friends}
+              onUpdate={handleUpdateFriend}
             />
           }
         />
@@ -100,7 +156,6 @@ function App() {
                 onBackHome={() => navigate("/")}
               />
             ) : (
-              // useEffect에서 처리될 동안 잠시 로딩
               <div style={{ padding: 20 }}>Loading...</div>
             )
           }
@@ -119,62 +174,26 @@ function App() {
             )
           }
         />
-
-        <Route
-          path="/terms"
-          element={<TermsScreen />}
-        />
-        <Route
-          path="/privacy"
-          element={<PrivacyScreen />}
-        />
+        <Route path="/terms" element={<TermsScreen />} />
+        <Route path="/privacy" element={<PrivacyScreen />} />
       </Routes>
     </div>
   );
 }
 
-/** ----- 화면 1: Home ----- */
-function HomeScreen(props: {
-  profile: UserProfile;
-  onGoProfile: () => void;
-  onGoTodayFortune: () => void;
-}) {
-  const { profile, onGoProfile, onGoTodayFortune } = props;
+function FriendEditWrapper({ friends, onUpdate }: { friends: UserProfile[], onUpdate: (p: UserProfile) => void }) {
+  const { id } = useParams();
+  const friend = friends.find(f => f.id === id);
+
+  if (!friend) return <div style={{ padding: 20 }}>친구를 찾을 수 없습니다.</div>;
 
   return (
-    <div style={{ backgroundColor: "#fff", minHeight: "100vh" }}>
-      <div style={{ padding: "60px 24px 40px", textAlign: "left" }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, color: "#191f28", lineHeight: 1.3 }}>
-          매일 만나는<br />나의 연애 점수
-        </h1>
-        <p style={{ fontSize: 16, color: "#4e5968", marginBottom: 40, lineHeight: 1.5 }}>
-          오늘 하루 당신의 연애 흐름은 어떨까요?<br />
-          간단한 프로필로 확인해보세요.
-        </p>
-
-        <div style={{
-          backgroundColor: "#f9fafb",
-          borderRadius: 24,
-          padding: "32px 24px",
-          marginBottom: 40,
-          border: "1px solid #f2f4f6"
-        }}>
-          <p style={{ fontSize: 15, color: "#4e5968", marginBottom: 20, lineHeight: 1.6 }}>
-            {profile.nickname
-              ? <strong>{profile.nickname}</strong>
-              : "연애 프로필"} 정보가 준비되었어요. {profile.nickname ? "" : "프로필을 입력하면 더 정확한 운세를 볼 수 있어요."}
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Button size="large" variant="fill" color="primary" onClick={onGoTodayFortune} style={{ width: "100%" }}>
-              오늘 운세 보기
-            </Button>
-            <Button size="large" variant="weak" color="primary" onClick={onGoProfile} style={{ width: "100%" }}>
-              {profile.nickname ? "프로필 수정하기" : "프로필 입력하기"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ProfileScreen
+      initialProfile={friend}
+      onSave={onUpdate}
+      title="꿍친 프로필 수정"
+      ctaLabel="수정완료"
+    />
   );
 }
 
