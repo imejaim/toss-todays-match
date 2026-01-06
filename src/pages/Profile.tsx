@@ -5,7 +5,7 @@ import {
     TextField,
     FixedBottomCTA,
     Checkbox
-} from "@toss/tds-mobile";
+} from "../components/ui";
 
 interface Props {
     initialProfile: UserProfile;

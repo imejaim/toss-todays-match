@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@toss/tds-mobile";
+import { Button } from "./components/ui";
 import { ProfileScreen } from "./pages/Profile";
 import { defaultProfile } from "./types";
 import type { UserProfile, FortuneResult } from "./types";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { UserProfile, FortuneResult } from "../types";
-import { Button } from "@toss/tds-mobile";
+import { Button } from "../components/ui";
 import { getDetailedFortune } from "../utils/llm";
 
 interface Props {
@@ -126,10 +126,10 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
                                 <p>짧은 광고를 보고<br />전체 내용을 무료로 확인하세요</p>
                                 <Button
                                     onClick={handleUnlock}
-                                    loading={isLoading}
+                                    disabled={isLoading}
                                     style={{ marginTop: 16 }}
                                 >
-                                    광고 보고 결과 보기
+                                    {isLoading ? "로딩 중..." : "광고 보고 결과 보기"}
                                 </Button>
                             </div>
                         </div>

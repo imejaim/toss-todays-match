@@ -1,7 +1,7 @@
 import type { UserProfile, FortuneResult } from "../types";
 import {
     Button,
-} from "@toss/tds-mobile";
+} from "../components/ui";
 
 interface Props {
     profile: UserProfile;
