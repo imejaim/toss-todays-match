@@ -53,8 +53,8 @@ export async function getDetailedFortune(profile: UserProfile, fortune: FortuneR
         if (data.result) {
             // 백엔드 프롬프트의 플레이스홀더를 우리 브랜드 AI 이름으로 치환
             const processedResult = data.result
-                .replace(/\[당신의 AI 이름\]/g, "큐피 AI")
-                .replace(/\[AI 이름\]/g, "큐피 AI");
+                .replace(/\[당신의 AI 이름\]/g, "짝꿍이")
+                .replace(/\[AI 이름\]/g, "짝꿍이");
             return processedResult;
         } else {
             throw new Error("Empty result from server");
