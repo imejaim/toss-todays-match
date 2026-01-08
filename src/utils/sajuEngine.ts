@@ -1,5 +1,5 @@
 import { Solar, Lunar } from "lunar-javascript";
-import type { SajuElement, SajuPillar, SajuZodiac, SajuProfile } from "../types";
+import type { SajuElement, SajuPillar, SajuZodiac, SajuResult } from "../types";
 
 const STEM_ELEMENTS: Record<string, SajuElement> = {
     "甲": "Wood", "乙": "Wood",
@@ -24,26 +24,25 @@ const BRANCH_ELEMENTS: Record<string, SajuElement> = {
 };
 
 /**
- * Calculates Saju Profile from birth date and time
+ * Calculates Saju Result from birth date and time
  */
-export function calculateSaju(
+export function analyzeSaju(
     birthDate: string, // YYYY-MM-DD
-    birthTime: string, // HH:mm
+    birthTime: string, // HH:mm or "unknown"
     isLunar: boolean = false
-): SajuProfile {
-    const [year, month, day] = birthDate.split("-").map(Number);
-    const [hour, minute] = birthTime.split(":").map(Number);
+): SajuResult {
+    const [year, month, day] = (birthDate || "1990-01-01").split("-").map(Number);
+    const timeToParse = (!birthTime || birthTime === "unknown") ? "12:00" : birthTime;
+    const [hour, minute] = timeToParse.split(":").map(Number);
 
     let solar: Solar;
     if (isLunar) {
-        // Simplified: assuming positive lunar date
         const lunar = Lunar.fromYmd(year, month, day);
         solar = lunar.getSolar();
     } else {
         solar = Solar.fromYmd(year, month, day);
     }
 
-    // Set time for more accurate hour pillar
     const solarWithTime = Solar.fromYmdHms(
         solar.getYear(),
         solar.getMonth(),
@@ -57,8 +56,6 @@ export function calculateSaju(
     const eightChar = lunarObj.getEightChar();
 
     const createPillar = (stem: string, branch: string): SajuPillar => ({
-        stem,
-        branch,
         element: STEM_ELEMENTS[stem] || BRANCH_ELEMENTS[branch] || "Earth",
         zodiac: BRANCH_ZODIAC[branch]
     });
@@ -67,7 +64,7 @@ export function calculateSaju(
         year: createPillar(eightChar.getYearGan(), eightChar.getYearZhi()),
         month: createPillar(eightChar.getMonthGan(), eightChar.getMonthZhi()),
         day: createPillar(eightChar.getDayGan(), eightChar.getDayZhi()),
-        time: createPillar(eightChar.getTimeGan(), eightChar.getTimeZhi())
+        hour: createPillar(eightChar.getTimeGan(), eightChar.getTimeZhi())
     };
 
     return {

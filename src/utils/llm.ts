@@ -1,18 +1,8 @@
+import type { UserProfile, FortuneResult } from "../types";
+
 // Backend Connection URL
 const BACKEND_URL = "https://todaysmatch-423863342.us-central1.run.app";
 
-interface Profile {
-    name: string;
-    gender: string;
-    birthDate: string;
-    relationshipStatus: string;
-}
-
-interface FortuneData {
-    score: number;
-    keywords: string[];
-    message: string;
-}
 
 // Fallback Mock Data (서버 에러 시)
 const MOCK_REPORT = `
@@ -33,7 +23,7 @@ const MOCK_REPORT = `
 의외의 장소에서 설레는 눈맞춤이 있을 수 있어요!
 `;
 
-export async function getDetailedFortune(profile: Profile, fortune: FortuneData): Promise<string> {
+export async function getDetailedFortune(profile: UserProfile, fortune: FortuneResult): Promise<string> {
     try {
         console.log("🚀 Requesting fortune from Backend:", BACKEND_URL);
 
@@ -45,7 +35,7 @@ export async function getDetailedFortune(profile: Profile, fortune: FortuneData)
             },
             body: JSON.stringify({
                 profile: {
-                    name: profile.name,
+                    name: profile.nickname, // UserProfile uses nickname
                     gender: profile.gender,
                     status: profile.relationshipStatus, // 서버에서 status로 받음
                     birthDate: profile.birthDate

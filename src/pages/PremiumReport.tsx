@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { UserProfile, FortuneResult } from "../types";
 import { Button } from "../components/ui";
 import { getDetailedFortune } from "../utils/llm";
+import { useRewardedAd } from "../hooks/useRewardedAd";
 
 interface Props {
     profile: UserProfile;
@@ -11,287 +12,135 @@ interface Props {
 
 export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
     const [isUnlocked, setIsUnlocked] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // Ad loading & LLM generation
-    const [isAdPlaying, setIsAdPlaying] = useState(false); // Ad simulation state
+    const [isGenerating, setIsGenerating] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
 
-    // Mock Ad Simulation & Unlocking
-    const handleUnlock = async () => {
-        if (!fortune) return;
+    // Ad Hook
+    const { loading: isAdLoading, showRewardAd } = useRewardedAd();
 
-        setIsLoading(true);
-
-        // 1. Simulate Ad Loading (1s)
-        await new Promise(r => setTimeout(r, 800));
-        setIsAdPlaying(true);
-        setIsLoading(false);
-
-        // 2. Simulate Ad Playing (3s)
-        await new Promise(r => setTimeout(r, 3000));
-        setIsAdPlaying(false);
-
-        // 3. Generate LLM Content
-        setIsLoading(true);
-        const text = await getDetailedFortune(
-            { ...profile, name: profile.nickname || "사용자" },
-            {
-                score: fortune.score,
-                keywords: fortune.keywords,
-                message: fortune.message
-            }
-        );
-
-        setReportContent(text);
-        setIsUnlocked(true);
-        setIsLoading(false);
+    const fetchReport = async () => {
+        setIsGenerating(true);
+        try {
+            const content = await getDetailedFortune(profile, fortune!);
+            setReportContent(content);
+            setIsUnlocked(true);
+        } catch (error) {
+            console.error("Failed to get premium report", error);
+            setReportContent("보고서를 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.");
+            setIsUnlocked(true);
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
-    /**
-     * Markdown-like simple parser for display
-     */
-    const renderMarkdown = (text: string) => {
-        return text.split("\n").map((line, idx) => {
-            if (line.startsWith("### ")) {
-                return <h3 key={idx} style={styles.mdH3}>{line.replace("### ", "")}</h3>;
-            } else if (line.startsWith("- ")) {
-                return <li key={idx} style={styles.mdLi}>{line.replace("- ", "")}</li>;
-            } else if (line.trim() === "") {
-                return <br key={idx} />;
-            } else {
-                return <p key={idx} style={styles.mdP}>{line}</p>;
+    const handleUnlock = () => {
+        if (!fortune) return;
+
+        if (isAdLoading) {
+            alert("광고를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
+        showRewardAd({
+            onRewarded: () => {
+                console.log("Reward granted! Fetching report...");
+                fetchReport();
+            },
+            onDismiss: () => {
+                console.log("Ad dismissed without reward.");
+                // Optional: alert users they need to watch full ad
             }
         });
     };
 
-    if (isAdPlaying) {
-        return (
-            <div style={styles.adOverlay}>
-                <div style={styles.adBadge}>AD</div>
-                <h2 style={{ color: "#fff", marginBottom: 16 }}>광고 시청 중...</h2>
-                <div style={styles.spinner} />
-                <p style={{ color: "rgba(255,255,255,0.7)", marginTop: 24 }}>
-                    잠시 후 심층 리포트가 공개됩니다
-                </p>
-            </div>
-        );
-    }
-
     return (
-        <div style={{ backgroundColor: "#f9fafb", minHeight: "100vh", paddingBottom: 100 }}>
-            {/* Header */}
-            <header style={styles.header}>
-
-                <span style={styles.headerTitle}>심층 리포트</span>
-                <div style={{ width: 24 }} />
-            </header>
-
-            <div style={{ padding: "0 20px 40px" }}>
-                {/* Intro Card */}
-                <div style={styles.card}>
-                    <h1 style={styles.title}>
-                        {profile.nickname || "당신"}님의<br />
-                        <span style={{ color: "#e86b8b" }}>숨겨진 연애 본능</span>은?
-                    </h1>
-                    <p style={styles.subtitle}>
-                        {isUnlocked
-                            ? "AI가 분석한 당신만의 시크릿 리포트입니다."
-                            : "AI가 당신과 오늘의 운세를 깊이 분석하고 있어요."}
-                    </p>
-                </div>
-
-                {/* Content Area */}
-                <div style={styles.reportArea}>
-                    {isUnlocked && reportContent ? (
-                        // 🔓 Unlocked Content
-                        <div style={styles.reportContent}>
-                            {renderMarkdown(reportContent)}
-
-                            <div style={styles.footerNote}>
-                                * AI 분석 결과로 재미로만 봐주세요.
-                            </div>
-                        </div>
-                    ) : (
-                        // 🔒 Locked Content
-                        <div style={styles.lockedContainer}>
-                            <div style={styles.blurLayer}>
-                                <div style={styles.skeletonText} />
-                                <div style={styles.skeletonText} />
-                                <div style={styles.skeletonText} />
-                                <div style={{ ...styles.skeletonText, width: "60%" }} />
-                            </div>
-
-                            <div style={styles.lockInfo}>
-                                <div style={styles.lockIcon}>🔒</div>
-                                <h3>심층 분석 완료</h3>
-                                <p>짧은 광고를 보고<br />전체 내용을 무료로 확인하세요</p>
-                                <Button
-                                    onClick={handleUnlock}
-                                    disabled={isLoading}
-                                    style={{ marginTop: 16 }}
-                                >
-                                    {isLoading ? "로딩 중..." : "광고 보고 결과 보기"}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+        <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 60 }}>
+            <div style={{
+                position: "sticky",
+                top: 0,
+                backgroundColor: "rgba(255,255,255,0.9)",
+                backdropFilter: "blur(10px)",
+                padding: "16px 20px",
+                display: "flex",
+                alignItems: "center",
+                borderBottom: "1px solid #f2f4f6",
+                zIndex: 100
+            }}>
+                <button onClick={onBackToday} style={{ border: "none", background: "none", fontSize: 20, cursor: "pointer" }}>&larr;</button>
+                <span style={{ flex: 1, textAlign: "center", fontWeight: 700, marginRight: 24 }}>프리미엄 연애 보고서</span>
             </div>
 
-            <div style={{ padding: "0 20px 40px" }}>
-                <Button variant="weak" color="primary" onClick={onBackToday} style={{ width: "100%", height: 50 }}>
-                    {isUnlocked ? "홈으로 돌아가기" : "뒤로가기"}
-                </Button>
+            <div style={{ padding: "32px 24px" }}>
+                {!isUnlocked ? (
+                    <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 64, marginBottom: 24 }}>💎</div>
+                        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, color: "#191f28" }}>
+                            {profile.nickname}님만을 위한<br />심층분석이 도착했어요
+                        </h1>
+                        <p style={{ fontSize: 16, color: "#4e5968", lineHeight: 1.6, marginBottom: 40 }}>
+                            타고난 기질과 오늘의 운의 흐름을 분석하여<br />
+                            가장 매력적으로 보일 수 있는 비법을 알려드려요.
+                        </p>
+
+                        <div style={{ backgroundColor: "#f9fafb", borderRadius: 20, padding: "24px", textAlign: "left", marginBottom: 40 }}>
+                            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>포함된 분석 내용</h3>
+                            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                                {["맞춤형 플러팅 전략", "행운을 부르는 스타일링", "주의해야 할 행동 패턴", "최고의 궁합 타이밍"].map(item => (
+                                    <li key={item} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#333d4b" }}>
+                                        <span style={{ color: "#3182f6" }}>✓</span> {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <Button
+                            variant="fill"
+                            color="primary"
+                            onClick={handleUnlock}
+                            disabled={isGenerating}
+                            style={{ width: "100%", height: 56, fontSize: 18, fontWeight: 700, borderRadius: 16 }}
+                        >
+                            {isGenerating ? "분석 중..." : (isAdLoading ? "광고 로딩 중..." : "광고 보고 무료로 확인")}
+                        </Button>
+                        <p style={{ marginTop: 16, fontSize: 13, color: "#8b95a1" }}>
+                            짧은 영상 시청 후 무료로 확인할 수 있습니다.
+                        </p>
+                    </div>
+
+                ) : (
+                    <div className="report-content">
+                        <div style={{
+                            backgroundColor: "#f2f8ff",
+                            borderRadius: 24,
+                            padding: "32px 24px",
+                            marginBottom: 32,
+                            border: "1px solid #e1eeff"
+                        }}>
+                            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20, color: "#191f28" }}>
+                                ✨ AI 심층 분석 결과
+                            </h2>
+                            <div style={{
+                                fontSize: 16,
+                                lineHeight: 1.8,
+                                color: "#333d4b",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "keep-all"
+                            }}>
+                                {reportContent || "보고서를 생성하지 못했습니다."}
+                            </div>
+                        </div>
+
+                        <Button
+                            variant="weak"
+                            color="secondary"
+                            onClick={onBackToday}
+                            style={{ width: "100%", borderRadius: 16 }}
+                        >
+                            닫기
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
-
-const styles: { [k: string]: React.CSSProperties } = {
-    header: {
-        height: 56,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 20px",
-        backgroundColor: "#fff",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        borderBottom: "1px solid #f2f4f6",
-    },
-    backButton: {
-        background: "none",
-        border: "none",
-        fontSize: 24,
-        cursor: "pointer",
-        color: "#333d4b",
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: 600,
-        color: "#333d4b",
-    },
-    card: {
-        backgroundColor: "#fff",
-        borderRadius: 24,
-        padding: "32px 24px",
-        marginTop: 20,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
-        textAlign: "center" as const,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: 700,
-        lineHeight: 1.4,
-        color: "#191f28",
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 15,
-        color: "#8b95a1",
-    },
-    reportArea: {
-        marginTop: 20,
-    },
-    reportContent: {
-        padding: "20px 4px",
-    },
-    mdH3: {
-        fontSize: 18,
-        fontWeight: 700,
-        color: "#333d4b",
-        marginTop: 24,
-        marginBottom: 12,
-    },
-    mdP: {
-        fontSize: 16,
-        lineHeight: 1.7,
-        color: "#4e5968",
-        marginBottom: 12,
-        wordBreak: "keep-all" as const,
-    },
-    mdLi: {
-        fontSize: 16,
-        lineHeight: 1.7,
-        color: "#4e5968",
-        marginLeft: 20,
-        marginBottom: 4,
-    },
-    footerNote: {
-        marginTop: 40,
-        fontSize: 13,
-        color: "#b0b8c1",
-        textAlign: "center" as const,
-    },
-    lockedContainer: {
-        position: "relative",
-        minHeight: 300,
-        backgroundColor: "#fff",
-        borderRadius: 20,
-        overflow: "hidden",
-        border: "1px solid #e5e8eb",
-    },
-    blurLayer: {
-        padding: 24,
-        filter: "blur(6px)",
-        pointerEvents: "none",
-        opacity: 0.5,
-    },
-    skeletonText: {
-        height: 16,
-        backgroundColor: "#f2f4f6",
-        borderRadius: 4,
-        marginBottom: 12,
-    },
-    lockInfo: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 10,
-        textAlign: "center" as const,
-        backgroundColor: "rgba(255,255,255,0.6)",
-    },
-    lockIcon: {
-        fontSize: 40,
-        marginBottom: 16,
-    },
-    // Ad Overlay Styles
-    adOverlay: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "#191f28",
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    adBadge: {
-        position: "absolute",
-        top: 20,
-        right: 20,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        color: "#fff",
-        padding: "4px 8px",
-        borderRadius: 4,
-        fontSize: 12,
-        fontWeight: 700,
-    },
-    spinner: {
-        width: 40,
-        height: 40,
-        border: "4px solid rgba(255,255,255,0.3)",
-        borderTopColor: "#fff",
-        borderRadius: "50%",
-        animation: "spin 1s linear infinite",
-    },
-};

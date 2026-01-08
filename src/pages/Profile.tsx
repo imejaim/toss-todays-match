@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { UserProfile, Gender, RelationshipStatus } from "../types";
 import {
     Button,
@@ -9,130 +9,108 @@ import {
 
 interface Props {
     initialProfile: UserProfile;
-    onSave: (profile: UserProfile) => void;
-    onBack?: () => void;
+    onSave: (p: UserProfile) => void;
     title?: string;
     ctaLabel?: string;
 }
 
-export function ProfileScreen({
-    initialProfile,
-    onSave,
-    title = "연애 프로필",
-    ctaLabel = "저장하고 보러가기"
-}: Props) {
-    const [localProfile, setLocalProfile] = useState<UserProfile>(initialProfile);
-
-    // Synchronize local state with initialProfile if it changes (important for edit)
-    useEffect(() => {
-        setLocalProfile(initialProfile);
-    }, [initialProfile]);
-
-    const update = (patch: Partial<UserProfile>) => {
-        setLocalProfile(prev => ({ ...prev, ...patch }));
-    };
+export function ProfileScreen({ initialProfile, onSave, title = "프로필 정보", ctaLabel = "저장하기" }: Props) {
+    const [nickname, setNickname] = useState(initialProfile.nickname);
+    const [birthDate, setBirthDate] = useState(initialProfile.birthDate);
+    const [birthTime, setBirthTime] = useState(initialProfile.birthTime);
+    const [gender, setGender] = useState<Gender>(initialProfile.gender);
+    const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus>(initialProfile.relationshipStatus);
+    const [isTimeUnknown, setIsTimeUnknown] = useState(initialProfile.birthTime === "unknown");
 
     const handleSave = () => {
-        if (!localProfile.nickname.trim()) {
-            alert("닉네임을 입력해주세요!");
+        if (!nickname || !birthDate) {
+            alert("닉네임과 생년월일을 입력해주세요.");
             return;
         }
-        onSave(localProfile);
+        onSave({
+            ...initialProfile,
+            nickname,
+            birthDate,
+            birthTime: isTimeUnknown ? "unknown" : birthTime,
+            gender,
+            relationshipStatus
+        });
     };
 
     return (
-        <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 120 }}>
-            <div style={{ padding: "0 24px" }}>
-                <h1 style={{ fontSize: 24, fontWeight: 700, marginTop: 24, marginBottom: 8, color: "#191f28" }}>
-                    {title}
-                </h1>
-                <p style={{ fontSize: 16, color: "#4e5968", marginBottom: 32 }}>
-                    더 정확한 분석을 위해 정보를 입력해주세요.
-                </p>
+        <div style={{ padding: "0 24px 120px", backgroundColor: "#fff", minHeight: "100vh" }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: "40px 0 32px", color: "#191f28" }}>
+                {title}
+            </h1>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                    {/* 1. Nickname */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                <TextField
+                    label="닉네임"
+                    placeholder="이름이나 닉네임"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                />
+
+                <div>
                     <TextField
-                        variant="box"
-                        label="닉네임"
-                        placeholder="예: 토스매니아"
-                        value={localProfile.nickname}
-                        onChange={(e) => update({ nickname: e.target.value })}
+                        label="생년월일"
+                        type="date"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
                     />
+                </div>
 
-                    {/* 2. Birthdate & Time */}
-                    <div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: "#4e5968", marginBottom: 12 }}>
-                            생년월일 및 태어난 시간
-                        </p>
-                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <TextField
-                                style={{ flex: 2 }}
-                                variant="box"
-                                type="date"
-                                value={localProfile.birthDate}
-                                onChange={(e) => update({ birthDate: e.target.value })}
-                            />
-                            <TextField
-                                style={{ flex: 1 }}
-                                variant="box"
-                                type="time"
-                                disabled={localProfile.birthTime === "unknown"}
-                                value={localProfile.birthTime === "unknown" ? "" : localProfile.birthTime}
-                                onChange={(e) => update({ birthTime: e.target.value })}
-                            />
-                        </div>
-                        <div style={{ marginTop: 12 }}>
-                            <Checkbox.Circle
-                                checked={localProfile.birthTime === "unknown"}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({ birthTime: e.target.checked ? "unknown" : "" })}
+                <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: "#4e5968" }}>태어난 시간</label>
+                        <Checkbox checked={isTimeUnknown} onChange={(e) => setIsTimeUnknown(e.target.checked)}>
+                            <span style={{ fontSize: 13, color: "#8b95a1" }}>모름</span>
+                        </Checkbox>
+                    </div>
+                    <TextField
+                        type="time"
+                        value={isTimeUnknown ? "" : birthTime}
+                        onChange={(e) => setBirthTime(e.target.value)}
+                        disabled={isTimeUnknown}
+                    />
+                </div>
+
+                <div>
+                    <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "#4e5968", marginBottom: 12 }}>성별</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                        {["male", "female"].map((g) => (
+                            <Button
+                                key={g}
+                                variant={gender === g ? "fill" : "weak"}
+                                color={gender === g ? "primary" : "secondary"}
+                                style={{ flex: 1, height: 48, borderRadius: 12 }}
+                                onClick={() => setGender(g as Gender)}
                             >
-                                <span style={{ fontSize: 15, color: "#4e5968", marginLeft: 4 }}>태어난 시간 모름</span>
-                            </Checkbox.Circle>
-                        </div>
+                                {g === "male" ? "남성" : "여성"}
+                            </Button>
+                        ))}
                     </div>
+                </div>
 
-                    {/* 3. Gender */}
-                    <div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: "#4e5968", marginBottom: 12 }}>
-                            성별
-                        </p>
-                        <div style={{ display: "flex", gap: 8 }}>
-                            {([
-                                { val: "male", label: "남성" },
-                                { val: "female", label: "여성" },
-                                { val: "other", label: "선택 안함" },
-                            ] as const).map((opt) => (
-                                <Button
-                                    key={opt.val}
-                                    style={{ flex: 1 }}
-                                    variant={localProfile.gender === opt.val ? "fill" : "weak"}
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => update({ gender: opt.val as Gender })}
-                                >
-                                    {opt.label}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 4. Relationship Status */}
-                    <div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: "#4e5968", marginBottom: 12 }}>
-                            연애 상태
-                        </p>
-                        <select
-                            style={legacyStyles.select}
-                            value={localProfile.relationshipStatus}
-                            onChange={(e) => update({ relationshipStatus: e.target.value as RelationshipStatus })}
-                        >
-                            <option value="" disabled>선택해주세요</option>
-                            <option value="single">솔로</option>
-                            <option value="dating">연애 중</option>
-                            <option value="married">기혼</option>
-                            <option value="complicated">복잡 미묘</option>
-                        </select>
+                <div>
+                    <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "#4e5968", marginBottom: 12 }}>연애 상태</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        {[
+                            { id: "single", label: "솔로" },
+                            { id: "dating", label: "연애 중" },
+                            { id: "married", label: "기혼" },
+                            { id: "complicated", label: "복잡함" }
+                        ].map((s) => (
+                            <Button
+                                key={s.id}
+                                variant={relationshipStatus === s.id ? "fill" : "weak"}
+                                color={relationshipStatus === s.id ? "primary" : "secondary"}
+                                style={{ height: 48, borderRadius: 12 }}
+                                onClick={() => setRelationshipStatus(s.id as RelationshipStatus)}
+                            >
+                                {s.label}
+                            </Button>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -143,17 +121,3 @@ export function ProfileScreen({
         </div>
     );
 }
-
-const legacyStyles = {
-    select: {
-        width: "100%",
-        padding: "14px 16px",
-        fontSize: 16,
-        borderRadius: 12,
-        border: "1px solid #d1d6db",
-        backgroundColor: "#f9fafb",
-        outline: "none",
-        appearance: "none" as const,
-        color: "#191f28",
-    }
-};

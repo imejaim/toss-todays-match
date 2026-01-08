@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, useNavigate, useLocation, useParams } from "react-router-dom";
 import { ProfileScreen } from "./pages/Profile";
 import { defaultProfile } from "./types";
-import type { UserProfile, FortuneResult } from "./types";
+import type { UserProfile } from "./types";
 
 import { TodayFortuneScreen } from "./pages/TodayFortune";
 import { PremiumReportScreen } from "./pages/PremiumReport";
@@ -39,11 +39,18 @@ function App() {
     return [];
   });
 
-  const [fortune, setFortune] = useState<FortuneResult | null>(null);
+  // 3. Derived State (Fortune)
+  // useMemo relies on profile changes or fresh renders. 
+  // Since date changes are handled by app reload usually, this is fine.
+  const fortune = useMemo(() => {
+    if (!profile.nickname) return null;
+    return calcTodayFortune(profile);
+  }, [profile]);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 3. Storage Synced Setters
+  // 4. Storage Synced Setters
   const handleProfileChange = (updatedProfile: UserProfile) => {
     const finalProfile = { ...updatedProfile, id: "me" };
     setProfile(finalProfile);
@@ -77,25 +84,19 @@ function App() {
       navigate("/profile");
       return;
     }
-    const result = calcTodayFortune(profile);
-    setFortune(result);
+    // Fortune is already calculated via useMemo
     navigate("/today-fortune");
   };
 
-  // 4. Persistence Effect
+  // 5. Route Protection Effect
   useEffect(() => {
     const path = location.pathname;
     const isResultPage = path === "/today-fortune" || path === "/premium-report";
 
-    if (isResultPage && !fortune) {
-      if (profile.nickname) {
-        const result = calcTodayFortune(profile);
-        setFortune(result);
-      } else {
-        navigate("/profile", { replace: true });
-      }
+    if (isResultPage && !profile.nickname) {
+      navigate("/profile", { replace: true });
     }
-  }, [location.pathname, fortune, profile, navigate]);
+  }, [location.pathname, profile.nickname, navigate]);
 
   return (
     <div style={styles.app}>

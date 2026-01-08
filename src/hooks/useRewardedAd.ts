@@ -1,34 +1,7 @@
-import { useCallback, useRef, useState } from 'react';
-// import { GoogleAdMob } from '@apps-in-toss/web-framework'; // 실제 API가 있다면 이렇게 사용
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { GoogleAdMob } from '@apps-in-toss/web-bridge';
 
-// 테스트용 가짜 AdMob 객체 (웹 개발을 위해)
-const MockGoogleAdMob = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    loadAppsInTossAdMob: ({ onEvent }: any) => {
-        console.log("[AdMock] Loading Ad...");
-        setTimeout(() => {
-            console.log("[AdMock] Ad Loaded");
-            onEvent({ type: 'loaded' });
-        }, 1500);
-        return () => { };
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    showAppsInTossAdMob: ({ onEvent }: any) => {
-        console.log("[AdMock] Showing Ad...");
-        setTimeout(() => {
-            onEvent({ type: 'impression' });
-            onEvent({ type: 'show' });
-            // 3초 후 보상 지급 시뮬레이션
-            setTimeout(() => {
-                console.log("[AdMock] User Earned Reward");
-                onEvent({ type: 'userEarnedReward' });
-                onEvent({ type: 'dismissed' });
-            }, 3000);
-        }, 500);
-    }
-};
-
-const TEST_AD_GROUP_ID = 'ait-ad-test-rewarded-id';
+const TEST_AD_GROUP_ID = 'ait.v2.live.f7cf74bd6b6b4c55';
 
 interface RewardedAdCallbacks {
     onRewarded?: () => void;
@@ -36,7 +9,7 @@ interface RewardedAdCallbacks {
 }
 
 export function useRewardedAd() {
-    const [loading, setLoading] = useState(true); // 초기에는 로딩 상태
+    const [loading, setLoading] = useState(true);
     const cleanupRef = useRef<(() => void) | undefined>();
     const rewardCallbackRef = useRef<(() => void) | undefined>();
     const dismissCallbackRef = useRef<(() => void) | undefined>();
@@ -44,64 +17,104 @@ export function useRewardedAd() {
     const loadRewardAd = useCallback(() => {
         setLoading(true);
 
-        // 실제 환경에서는 GoogleAdMob 사용, 여기서는 Mock 사용
-        // const AdModule = window.TossApp ? GoogleAdMob : MockGoogleAdMob;
-        const AdModule = MockGoogleAdMob;
+        // [Web/Localhost Safe Guard]
+        // GoogleAdMob 객체가 없거나(웹), 로드 메서드가 없으면 Mock 모드로 동작
+        if (typeof GoogleAdMob === 'undefined' || !GoogleAdMob?.loadAppsInTossAdMob) {
+            console.warn("⚠️ GoogleAdMob is not available (Web/Dev mode). Using Mock.");
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000);
+            return;
+        }
+
+        const isAdUnsupported =
+            GoogleAdMob.loadAppsInTossAdMob.isSupported?.() === false;
+
+        if (isAdUnsupported) {
+            console.warn('광고가 준비되지 않았거나, 지원되지 않아요.');
+            return;
+        }
 
         cleanupRef.current?.();
         cleanupRef.current = undefined;
 
-        const cleanup = AdModule.loadAppsInTossAdMob({
+        const cleanup = GoogleAdMob.loadAppsInTossAdMob({
             options: {
                 adGroupId: TEST_AD_GROUP_ID,
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onEvent: (event: any) => {
+            onEvent: (event: { type: string }) => {
                 if (event.type === 'loaded') {
+                    console.log('Ad Loaded');
                     setLoading(false);
                 }
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onError: (error: any) => {
+            onError: (error: unknown) => {
                 console.error('광고 로드 실패', error);
-                setLoading(false); // 에러나면 로딩 끝내서 버튼 활성화라도 시키거나 처리 필요
             },
         });
 
         cleanupRef.current = cleanup;
     }, []);
 
+    // Preload on mount
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadRewardAd();
+        return () => {
+            cleanupRef.current?.();
+        };
+    }, [loadRewardAd]);
+
     const showRewardAd = ({ onRewarded, onDismiss }: RewardedAdCallbacks) => {
+        // [Web/Localhost Safe Guard] Mock Show
+        if (typeof GoogleAdMob === 'undefined' || !GoogleAdMob?.showAppsInTossAdMob) {
+            const confirmed = window.confirm("[개발모드] 광고를 시청하시겠습니까? (확인=보상지급, 취소=닫기)");
+            if (confirmed) {
+                onRewarded?.();
+            } else {
+                onDismiss?.();
+            }
+            return;
+        }
+
+        const isAdUnsupported =
+            GoogleAdMob.showAppsInTossAdMob.isSupported?.() === false;
+
         if (loading) {
-            alert('광고를 불러오는 중입니다. 잠시만 기다려주세요!');
+            console.warn('광고가 아직 로딩 중입니다.');
+            return;
+        }
+
+        if (isAdUnsupported) {
+            console.warn('광고 지원되지 않음 - 보상 바로 지급');
+            // Fallback: grant reward if ads are broken/unsupported
             return;
         }
 
         rewardCallbackRef.current = onRewarded;
         dismissCallbackRef.current = onDismiss;
 
-        const AdModule = MockGoogleAdMob;
-
-        AdModule.showAppsInTossAdMob({
+        GoogleAdMob.showAppsInTossAdMob({
             options: {
                 adGroupId: TEST_AD_GROUP_ID,
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onEvent: (event: any) => {
+            onEvent: (event: { type: string }) => {
+                console.log('Ad Event:', event.type);
                 switch (event.type) {
                     case 'dismissed':
                         dismissCallbackRef.current?.();
                         dismissCallbackRef.current = undefined;
                         break;
+
                     case 'userEarnedReward':
                         rewardCallbackRef.current?.();
                         rewardCallbackRef.current = undefined;
                         break;
                 }
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onError: (error: any) => {
+            onError: (error: unknown) => {
                 console.error('광고 보여주기 실패', error);
+                dismissCallbackRef.current?.();
             },
         });
     };

@@ -1,6 +1,8 @@
+import React from "react";
 import { Button, ListHeader } from "../components/ui";
 import type { UserProfile } from "../types";
 import { generateCharacterPrompts, getElementEmoji } from "../utils/profileAnalysis";
+import { calculateAffinity, getBestMatch } from "../utils/affinity";
 
 // Get zodiac emoji from species
 function getZodiacEmoji(species: string): string {
@@ -31,9 +33,13 @@ export default function HomeScreen({
     onEditFriend,
     onDeleteFriend
 }: Props) {
+    // 1. My Character Info
     const character = profile.nickname ? generateCharacterPrompts(profile) : null;
     const zodiacEmoji = character ? getZodiacEmoji(character.species) : "✨";
-    const elementEmoji = character ? getElementEmoji(character.rawElement) : "✨";
+    const elementEmoji = character ? getElementEmoji(character.element) : "✨";
+
+    // 2. Best Match Logic
+    const bestMatch = (profile.nickname && friends.length > 0) ? getBestMatch(profile, friends) : null;
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh" }}>
@@ -95,6 +101,45 @@ export default function HomeScreen({
                     </div>
                 </div>
 
+                {/* Today's Recommendation (Best Match) */}
+                {bestMatch && (
+                    <div style={{
+                        marginTop: 40,
+                        backgroundColor: "#f2f7ff",
+                        borderRadius: 24,
+                        padding: "24px",
+                        border: "1px solid #e1eeff"
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                            <span style={{ fontSize: 20 }}>💖</span>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: "#3182f6" }}>오늘의 추천 꿍친</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                            <div style={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: "50%",
+                                backgroundColor: "#fff",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 28,
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                            }}>
+                                {getZodiacEmoji(generateCharacterPrompts(bestMatch.friend).species)}
+                            </div>
+                            <div>
+                                <p style={{ fontSize: 16, fontWeight: 700, color: "#191f28", margin: 0 }}>
+                                    {bestMatch.friend.nickname}님과 {bestMatch.affinity.score}점!
+                                </p>
+                                <p style={{ fontSize: 13, color: "#4e5968", marginTop: 4, margin: 0 }}>
+                                    {bestMatch.affinity.description}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Friends Section */}
                 <div style={{ marginTop: 40 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -118,6 +163,8 @@ export default function HomeScreen({
                         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                             {friends.map(friend => {
                                 const fChar = generateCharacterPrompts(friend);
+                                const affinity = profile.nickname ? calculateAffinity(profile, friend) : null;
+
                                 return (
                                     <div key={friend.id} style={friendCardStyle}>
                                         <div style={{
@@ -135,9 +182,20 @@ export default function HomeScreen({
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                 <span style={{ fontWeight: 600, color: "#333d4b" }}>{friend.nickname}</span>
-                                                <span style={{ fontSize: 11, color: "#8b95a1" }}>{fChar.elementName}</span>
+                                                {affinity && (
+                                                    <span style={{
+                                                        fontSize: 11,
+                                                        color: "#3182f6",
+                                                        backgroundColor: "#eff6ff",
+                                                        padding: "1px 6px",
+                                                        borderRadius: 8,
+                                                        fontWeight: 700
+                                                    }}>
+                                                        {affinity.score}점
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p style={{ fontSize: 12, color: "#6b7684", margin: 0 }}>{fChar.speciesKorean}</p>
+                                            <p style={{ fontSize: 12, color: "#6b7684", margin: 0 }}>{fChar.speciesKorean} / {fChar.elementName}</p>
                                         </div>
                                         <div style={{ display: "flex", gap: 8 }}>
                                             <span onClick={() => onEditFriend(friend.id)} style={actionBtnStyle}>수정</span>
@@ -153,7 +211,7 @@ export default function HomeScreen({
                 <div style={{ marginTop: 40, paddingBottom: 60, borderTop: "1px solid #f2f4f6", paddingTop: 32 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 700, color: "#333d4b", marginBottom: 8 }}>궁합 분석 시스템</h3>
                     <p style={{ fontSize: 13, color: "#8b95a1", lineHeight: 1.6 }}>
-                        등록된 꿍친들과의 오행 상생/상극 분석을 통해 매일 가장 잘 어울리는 '오늘의 꿍친'을 추천해 드립니다.
+                        나루 친구들 간의 오행 상생/상극 분석을 통해 매일 가장 잘 어울리는 '오늘의 꿍친'을 추천해 드립니다.
                     </p>
                 </div>
             </div>
