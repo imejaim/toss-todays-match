@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { UserProfile, FortuneResult } from "../types";
 import {
     Button,
 } from "../components/ui";
 import { generateCharacterPrompts } from "../utils/profileAnalysis";
+import { analyzeInnateCharacter } from "../utils/innateCharacter";
+import { getTodayEnergy, analyzeInteraction, getDailyTheme } from "../utils/dailyEnergy";
+import { InnateCharacterCard } from "../components/InnateCharacterCard";
+import { TodayEnergyCard } from "../components/TodayEnergyCard";
 
 // Get zodiac emoji from species
 function getZodiacEmoji(species: string): string {
@@ -26,19 +30,40 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
     const nameLabel = profile.nickname || "오늘의 짝꿍";
     const character = generateCharacterPrompts(profile);
 
+    // 타고난 캐릭터 분석
+    const innateAnalysis = useMemo(() => analyzeInnateCharacter(profile), [profile]);
+
+    // 오늘의 에너지 분석
+    const dailyEnergy = useMemo(() => getTodayEnergy(new Date()), []);
+    const myElement = profile.saju?.dayMaster.element || "Water";
+    const interaction = useMemo(() => analyzeInteraction(myElement, dailyEnergy.element), [myElement, dailyEnergy.element]);
+    const themes = useMemo(() => getDailyTheme(dailyEnergy), [dailyEnergy]);
+
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 110 }}>
-            <div style={{ padding: "0 24px", textAlign: "center" }}>
-                <h1 style={{ fontSize: 22, fontWeight: 700, margin: "24px 0 32px", color: "#191f28" }}>
+            <div style={{ padding: "0 24px" }}>
+                <h1 style={{ fontSize: 22, fontWeight: 700, margin: "24px 0 20px", color: "#191f28", textAlign: "center" }}>
                     오늘의 연애 운세
                 </h1>
+
+                {/* 새로 추가: 타고난 캐릭터 카드 */}
+                <InnateCharacterCard analysis={innateAnalysis} compact />
+
+                {/* 새로 추가: 오늘의 에너지 카드 */}
+                <TodayEnergyCard
+                    dailyEnergy={dailyEnergy}
+                    interaction={interaction}
+                    themes={themes}
+                    compact
+                />
 
                 {/* Character Avatar on Fortune Screen */}
                 <div style={{
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    marginBottom: 8
+                    marginBottom: 8,
+                    textAlign: "center"
                 }}>
                     <div style={{
                         width: 80,
@@ -56,7 +81,7 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     </div>
                 </div>
 
-                <div style={{ padding: "20px 0 40px" }}>
+                <div style={{ padding: "20px 0 40px", textAlign: "center" }}>
                     <p style={{ fontSize: 16, color: "#4e5968", marginBottom: 8 }}>
                         {nameLabel}님의 오늘 연애 점수
                     </p>
@@ -122,3 +147,4 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
         </div>
     );
 }
+
