@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { UserProfile, FortuneResult } from "../types";
 import { Button } from "../components/ui";
 import { getDetailedFortune } from "../utils/llm";
 import { useRewardedAd } from "../hooks/useRewardedAd";
+import { MatchCharacterCard } from "../components/MatchCharacterCard";
+import { generateMatchImagePrompt, generateMatchDescription } from "../utils/matchImageGenerator";
+import { getTodayEnergy } from "../utils/dailyEnergy";
 
 interface Props {
     profile: UserProfile;
@@ -14,6 +17,18 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
+
+    // 오늘의 짝꿍 이미지 관련
+    const dailyEnergy = useMemo(() => getTodayEnergy(), []);
+    const matchPrompt = useMemo(() => {
+        if (!fortune) return null;
+        return generateMatchImagePrompt(profile, fortune, dailyEnergy);
+    }, [profile, fortune, dailyEnergy]);
+
+    const matchDescription = useMemo(() => {
+        if (!fortune || !matchPrompt) return "";
+        return generateMatchDescription(matchPrompt, fortune, dailyEnergy);
+    }, [fortune, matchPrompt, dailyEnergy]);
 
     // Ad Hook
     const { loading: isAdLoading, showRewardAd } = useRewardedAd();
@@ -48,7 +63,6 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
             },
             onDismiss: () => {
                 console.log("Ad dismissed without reward.");
-                // Optional: alert users they need to watch full ad
             }
         });
     };
@@ -85,7 +99,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
                         <div style={{ backgroundColor: "#f9fafb", borderRadius: 20, padding: "24px", textAlign: "left", marginBottom: 40 }}>
                             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>포함된 분석 내용</h3>
                             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                                {["맞춤형 플러팅 전략", "행운을 부르는 스타일링", "주의해야 할 행동 패턴", "최고의 궁합 타이밍"].map(item => (
+                                {["맞춤형 플러팅 전략", "행운을 부르는 스타일링", "주의해야 할 행동 패턴", "오늘의 이상형 이미지"].map(item => (
                                     <li key={item} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#333d4b" }}>
                                         <span style={{ color: "#3182f6" }}>✓</span> {item}
                                     </li>
@@ -109,11 +123,12 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
 
                 ) : (
                     <div className="report-content">
+                        {/* AI 심층 분석 결과 */}
                         <div style={{
                             backgroundColor: "#f2f8ff",
                             borderRadius: 24,
                             padding: "32px 24px",
-                            marginBottom: 32,
+                            marginBottom: 24,
                             border: "1px solid #e1eeff"
                         }}>
                             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20, color: "#191f28" }}>
@@ -130,6 +145,15 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
                             </div>
                         </div>
 
+                        {/* 오늘의 짝꿍 이미지 카드 */}
+                        {matchPrompt && (
+                            <MatchCharacterCard
+                                matchPrompt={matchPrompt}
+                                description={matchDescription}
+                                imageUrl="/sample_match_female.png"  // 샘플 이미지 사용
+                            />
+                        )}
+
                         <Button
                             variant="weak"
                             color="secondary"
@@ -144,3 +168,4 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
         </div>
     );
 }
+
