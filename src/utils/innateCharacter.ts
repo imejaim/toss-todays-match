@@ -3,6 +3,7 @@
  * 사주, 휴먼디자인, 에니어그램을 통합하여 친근한 언어로 설명합니다.
  */
 import type { UserProfile, SajuElement, HDType } from "../types";
+import { analyzeSaju } from "./sajuEngine";
 
 // ==========================================
 // 오행(五行) 캐릭터 설명
@@ -188,7 +189,16 @@ export interface InnateCharacterAnalysis {
  * 사용자 프로필로부터 타고난 캐릭터 분석 생성
  */
 export function analyzeInnateCharacter(profile: UserProfile): InnateCharacterAnalysis {
-    const element = profile.saju?.dayMaster.element || "Water";
+    // 실시간 사주 계산 (프로필에 저장된 것이 없거나 생년월일과 불일치할 가능성 대비)
+    let saju = profile.saju;
+    if (!saju && profile.birthDate) {
+        saju = analyzeSaju(profile.birthDate, profile.birthTime || "12:00");
+    } else if (profile.birthDate && saju) {
+        // 혹시 모르니 다시 한 번 계산 (안전장치)
+        saju = analyzeSaju(profile.birthDate, profile.birthTime || "12:00");
+    }
+
+    const element = saju?.dayMaster.element || "Water";
     const hdType = profile.humanDesign?.type || "Generator";
     const enneagramType = profile.enneagram?.type || 7;
 

@@ -47,7 +47,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
     }, [matchPrompt]);
 
     // Ad Hook
-    const { loading: isAdLoading, showRewardAd } = useRewardedAd();
+    const { loading: isAdLoading, showRewardedAd } = useRewardedAd();
 
     const fetchReport = async () => {
         setIsGenerating(true);
@@ -85,21 +85,6 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 60 }}>
-            <div style={{
-                position: "sticky",
-                top: 0,
-                backgroundColor: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(10px)",
-                padding: "16px 20px",
-                display: "flex",
-                alignItems: "center",
-                borderBottom: "1px solid #f2f4f6",
-                zIndex: 100
-            }}>
-                <button onClick={onBackToday} style={{ border: "none", background: "none", fontSize: 20, cursor: "pointer" }}>&larr;</button>
-                <span style={{ flex: 1, textAlign: "center", fontWeight: 700, marginRight: 24 }}>프리미엄 연애 보고서</span>
-            </div>
-
             <div style={{ padding: "32px 24px" }}>
                 {!isUnlocked ? (
                     <div style={{ textAlign: "center" }}>

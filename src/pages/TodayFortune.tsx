@@ -32,12 +32,12 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
     const nameLabel = profile.nickname || "오늘의 짝꿍";
     const character = generateCharacterPrompts(profile);
 
-    // 타고난 캐릭터 분석
+    // 타고난 캐릭터 분석 (실시간 사주 계산 포함)
     const innateAnalysis = useMemo(() => analyzeInnateCharacter(profile), [profile]);
 
     // 오늘의 에너지 분석
     const dailyEnergy = useMemo(() => getTodayEnergy(new Date()), []);
-    const myElement = profile.saju?.dayMaster.element || "Water";
+    const myElement = innateAnalysis.element; // profile.saju 대신 실시간 계산된 결과 사용
     const interaction = useMemo(() => analyzeInteraction(myElement, dailyEnergy.element), [myElement, dailyEnergy.element]);
     const themes = useMemo(() => getDailyTheme(dailyEnergy), [dailyEnergy]);
 
