@@ -38,6 +38,14 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
         return createMatchShareContent(profile, fortune, matchPrompt.gender);
     }, [profile, fortune, matchPrompt]);
 
+    // 오행에 맞는 짝꿍 이미지 URL 선택
+    const matchImageUrl = useMemo(() => {
+        if (!matchPrompt) return "";
+        const element = dailyEnergy.element.toLowerCase();  // Wood -> wood
+        const gender = matchPrompt.gender;  // male or female
+        return `/match_images/${gender}/${element}_01.png`;
+    }, [dailyEnergy.element, matchPrompt]);
+
     // Ad Hook
     const { loading: isAdLoading, showRewardAd } = useRewardedAd();
 
@@ -158,7 +166,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
                             <MatchCharacterCard
                                 matchPrompt={matchPrompt}
                                 description={matchDescription}
-                                imageUrl={matchPrompt.gender === "female" ? "/sample_match_female.png" : "/sample_match_male.png"}
+                                imageUrl={matchImageUrl}
                             />
                         )}
 
