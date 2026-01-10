@@ -8,6 +8,8 @@ import { analyzeInnateCharacter } from "../utils/innateCharacter";
 import { getTodayEnergy, analyzeInteraction, getDailyTheme } from "../utils/dailyEnergy";
 import { InnateCharacterCard } from "../components/InnateCharacterCard";
 import { TodayEnergyCard } from "../components/TodayEnergyCard";
+import { ShareButtons } from "../components/ShareButtons";
+import { createFortuneShareContent } from "../utils/share";
 
 // Get zodiac emoji from species
 function getZodiacEmoji(species: string): string {
@@ -38,6 +40,10 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
     const myElement = profile.saju?.dayMaster.element || "Water";
     const interaction = useMemo(() => analyzeInteraction(myElement, dailyEnergy.element), [myElement, dailyEnergy.element]);
     const themes = useMemo(() => getDailyTheme(dailyEnergy), [dailyEnergy]);
+
+    // 공유 콘텐츠
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const shareContent = createFortuneShareContent(profile, fortune);
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 110 }}>
@@ -124,6 +130,10 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     </p>
                 </div>
 
+                {/* 공유 버튼 */}
+                <ShareButtons content={shareContent} />
+
+                <div style={{ marginTop: 24 }}></div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <Button
                         variant="fill"

@@ -5,10 +5,10 @@
 import { Solar } from "lunar-javascript";
 import type { SajuElement, SajuZodiac } from "../types";
 
-// 천간(天干) 목록
-const HEAVENLY_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-// 지지(地支) 목록
-const EARTHLY_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+// 천간(天干) 목록 - lunar-javascript 사용으로 직접 참조 안함
+// const HEAVENLY_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+// 지지(地支) 목록 - lunar-javascript 사용으로 직접 참조 안함
+// const EARTHLY_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 
 // 천간 → 오행
 const STEM_TO_ELEMENT: Record<string, SajuElement> = {

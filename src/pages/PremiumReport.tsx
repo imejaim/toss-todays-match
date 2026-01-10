@@ -6,6 +6,8 @@ import { useRewardedAd } from "../hooks/useRewardedAd";
 import { MatchCharacterCard } from "../components/MatchCharacterCard";
 import { generateMatchImagePrompt, generateMatchDescription } from "../utils/matchImageGenerator";
 import { getTodayEnergy } from "../utils/dailyEnergy";
+import { ShareButtons } from "../components/ShareButtons";
+import { createMatchShareContent } from "../utils/share";
 
 interface Props {
     profile: UserProfile;
@@ -29,6 +31,12 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
         if (!fortune || !matchPrompt) return "";
         return generateMatchDescription(matchPrompt, fortune, dailyEnergy);
     }, [fortune, matchPrompt, dailyEnergy]);
+
+    // 공유 콘텐츠
+    const shareContent = useMemo(() => {
+        if (!fortune || !matchPrompt) return null;
+        return createMatchShareContent(profile, fortune, matchPrompt.gender);
+    }, [profile, fortune, matchPrompt]);
 
     // Ad Hook
     const { loading: isAdLoading, showRewardAd } = useRewardedAd();
@@ -150,8 +158,13 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
                             <MatchCharacterCard
                                 matchPrompt={matchPrompt}
                                 description={matchDescription}
-                                imageUrl="/sample_match_female.png"  // 샘플 이미지 사용
+                                imageUrl={matchPrompt.gender === "female" ? "/sample_match_female.png" : "/sample_match_male.png"}
                             />
+                        )}
+
+                        {/* 공유 버튼 */}
+                        {shareContent && (
+                            <ShareButtons content={shareContent} />
                         )}
 
                         <Button

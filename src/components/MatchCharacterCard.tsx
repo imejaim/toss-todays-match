@@ -2,7 +2,7 @@
  * 오늘의 짝꿍 이미지 카드 컴포넌트
  * AI 생성 이미지와 설명을 표시합니다.
  */
-import React, { useState, useEffect } from "react";
+import React from "react";
 import type { MatchImagePrompt } from "../utils/matchImageGenerator";
 import { Button } from "./ui";
 
@@ -21,13 +21,8 @@ export function MatchCharacterCard({
     onGenerateImage,
     isGenerating = false
 }: Props) {
-    const [showImage, setShowImage] = useState(false);
-
-    useEffect(() => {
-        if (imageUrl) {
-            setShowImage(true);
-        }
-    }, [imageUrl]);
+    // imageUrl이 있으면 바로 이미지 표시
+    const showImage = !!imageUrl;
 
     return (
         <div style={styles.container}>
