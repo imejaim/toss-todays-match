@@ -21,6 +21,7 @@ export interface MatchImagePrompt {
     keyFeatures: string[];
     moodScore: number;  // -2 ~ +2 (나쁨 ~ 좋음)
     title: string;      // UI 표시용 제목
+    matchElement: SajuElement;  // 짝궁 오행 (이미지 선택용)
 }
 
 // ==========================================
@@ -168,6 +169,67 @@ function getMoodTier(score: number): string {
     return "dark";
 }
 
+// 오행 상생 관계: A가 B를 생함
+const GENERATES: Record<SajuElement, SajuElement> = {
+    "Wood": "Fire",   // 목생화
+    "Fire": "Earth",  // 화생토
+    "Earth": "Metal", // 토생금
+    "Metal": "Water", // 금생수
+    "Water": "Wood"   // 수생목
+};
+
+// 오행 상극 관계: A가 B를 극함
+const OVERCOMES: Record<SajuElement, SajuElement> = {
+    "Wood": "Earth",  // 목극토
+    "Fire": "Metal",  // 화극금
+    "Earth": "Water", // 토극수
+    "Metal": "Wood",  // 금극목
+    "Water": "Fire"   // 수극화
+};
+
+/**
+ * 나의 오행과 오늘의 오행을 고려한 짝궁 오행 계산
+ * - 나에게 상생(에너지를 주는) 오행, 또는
+ * - 오늘과 나의 상호작용에 따른 보완적 오행
+ */
+function getMatchElement(myElement: SajuElement, todayElement: SajuElement): SajuElement {
+    // 나에게 에너지를 주는 오행 (나를 생해주는 오행)
+    // 예: 나가 화(Fire)이면, 목(Wood)이 나를 생해줌 (목생화)
+    const elementsThatGenerateMe: Record<SajuElement, SajuElement> = {
+        "Wood": "Water",  // 수생목
+        "Fire": "Wood",   // 목생화
+        "Earth": "Fire",  // 화생토
+        "Metal": "Earth", // 토생금
+        "Water": "Metal"  // 금생수
+    };
+
+    // 기본적으로 나에게 에너지를 주는 오행을 짝궁으로
+    let matchElement = elementsThatGenerateMe[myElement];
+
+    // 오늘의 오행이 나와 같으면 -> 비화(比和), 같은 오행 짝궁
+    if (myElement === todayElement) {
+        matchElement = myElement;
+    }
+    // 오늘이 나를 생해주면 -> 오늘 오행 짝궁 (좋은 날!)
+    else if (GENERATES[todayElement] === myElement) {
+        matchElement = todayElement;
+    }
+    // 내가 오늘을 생해주면 -> 내가 생해주는 오행 짝궁 (에너지 소모일)
+    else if (GENERATES[myElement] === todayElement) {
+        matchElement = GENERATES[myElement];
+    }
+    // 오늘이 나를 극하면 -> 나를 생해주는 오행 짝궁 (보완 필요)
+    else if (OVERCOMES[todayElement] === myElement) {
+        matchElement = elementsThatGenerateMe[myElement];
+    }
+    // 내가 오늘을 극하면 -> 오늘 오행 짝궁 (리더십 발휘일)
+    else if (OVERCOMES[myElement] === todayElement) {
+        matchElement = todayElement;
+    }
+
+    return matchElement;
+}
+
 /**
  * 사용자 나이 계산
  */
@@ -205,11 +267,17 @@ export function generateMatchImagePrompt(
         basePrompt = isMature ? BASE_MALE_MATURE_PROMPT : BASE_MALE_YOUNG_PROMPT;
     }
 
-    // 오늘의 오행 기반 스타일
-    const elementStyle = ELEMENT_STYLES[dailyEnergy.element];
+    // 나의 오행 (일주 기준)
+    const myElement = profile.saju?.dayMaster.element || dailyEnergy.element;
+
+    // 짝궁 오행 계산 (나의 오행 + 오늘의 오행 상호작용)
+    const matchElement = getMatchElement(myElement, dailyEnergy.element);
+
+    // 짝궁 오행 기반 스타일
+    const elementStyle = ELEMENT_STYLES[matchElement];
     const setting = elementStyle.settings[0];
 
-    // 의상 선택 (오행에 맞는 색상의 의상)
+    // 의상 선택 (짝궁 오행에 맞는 색상의 의상)
     const outfits = matchGender === "female" ? elementStyle.outfitsFemale : elementStyle.outfitsMale;
     const outfit = outfits[Math.floor(Math.random() * outfits.length)];
 
@@ -242,9 +310,15 @@ export function generateMatchImagePrompt(
     const additionalElements = [hdAccessory, enneagramItem, `${flower} decoration`, animal].filter(Boolean).join(", ");
     prompt += ` Additional elements: ${additionalElements}. NOT cartoon, NOT anime.`;
 
+    // 오행 한글명
+    const elementKorean: Record<SajuElement, string> = {
+        "Wood": "나무(木)", "Fire": "불(火)", "Earth": "흙(土)",
+        "Metal": "쇠(金)", "Water": "물(水)"
+    };
+
     // 핵심 특징 리스트
     const keyFeatures = [
-        dailyEnergy.elementKorean,
+        elementKorean[matchElement],
         hdType,
         `${enneagramType}유형`,
         moodTier
@@ -256,10 +330,11 @@ export function generateMatchImagePrompt(
     return {
         prompt,
         gender: matchGender,
-        style: `${dailyEnergy.elementKorean} + ${hdType} + ${enneagramType}유형`,
+        style: `${elementKorean[matchElement]} + ${hdType} + ${enneagramType}유형`,
         keyFeatures,
         moodScore,
-        title
+        title,
+        matchElement
     };
 }
 
@@ -286,8 +361,10 @@ export function generateSelfImagePrompt(
         basePrompt = isMature ? BASE_MALE_MATURE_PROMPT : BASE_MALE_YOUNG_PROMPT;
     }
 
-    // 나머지는 동일한 로직
-    const elementStyle = ELEMENT_STYLES[dailyEnergy.element];
+    // 나의 오행 사용
+    const myElement = profile.saju?.dayMaster.element || dailyEnergy.element;
+
+    const elementStyle = ELEMENT_STYLES[myElement];
     const setting = elementStyle.settings[0];
     const outfits = selfGender === "female" ? elementStyle.outfitsFemale : elementStyle.outfitsMale;
     const outfit = outfits[Math.floor(Math.random() * outfits.length)];
@@ -324,7 +401,8 @@ export function generateSelfImagePrompt(
         style: `${dailyEnergy.elementKorean} + ${hdType} + ${enneagramType}유형`,
         keyFeatures,
         moodScore,
-        title
+        title,
+        matchElement: myElement
     };
 }
 

@@ -38,13 +38,13 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: Props) {
         return createMatchShareContent(profile, fortune, matchPrompt.gender);
     }, [profile, fortune, matchPrompt]);
 
-    // 오행에 맞는 짝꿍 이미지 URL 선택
+    // 짝궁 오행에 맞는 이미지 URL 선택 (나의 오행 + 오늘의 오행 상호작용 결과)
     const matchImageUrl = useMemo(() => {
         if (!matchPrompt) return "";
-        const element = dailyEnergy.element.toLowerCase();  // Wood -> wood
+        const element = matchPrompt.matchElement.toLowerCase();  // Wood -> wood
         const gender = matchPrompt.gender;  // male or female
         return `/match_images/${gender}/${element}_01.png`;
-    }, [dailyEnergy.element, matchPrompt]);
+    }, [matchPrompt]);
 
     // Ad Hook
     const { loading: isAdLoading, showRewardAd } = useRewardedAd();
