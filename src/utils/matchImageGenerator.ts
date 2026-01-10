@@ -1,8 +1,10 @@
 /**
- * 짝꿍 이미지 프롬프트 생성기
- * 사용자의 사주/운세를 기반으로 오늘의 이상형 이미지 프롬프트를 생성합니다.
+ * 짝꿍 이미지 프롬프트 생성기 v2
+ * 사용자의 사주/휴먼디자인/에니어그램을 기반으로 오늘의 이상형 이미지 프롬프트를 생성합니다.
+ * 
+ * 기준 스타일: 에메랄드 그린 오프숄더 드레스, 보타니컬 카페 배경, 한국 이상적 미인
  */
-import type { UserProfile, FortuneResult, SajuElement } from "../types";
+import type { UserProfile, FortuneResult, SajuElement, HDType } from "../types";
 import type { DailyEnergy } from "./dailyEnergy";
 
 export interface MatchImagePrompt {
@@ -10,64 +12,138 @@ export interface MatchImagePrompt {
     gender: "male" | "female";
     style: string;
     keyFeatures: string[];
+    moodScore: number;  // -2 ~ +2 (나쁨 ~ 좋음)
 }
 
-// 오행별 외모 특징
-const ELEMENT_APPEARANCE: Record<SajuElement, { style: string; colors: string[]; vibe: string }> = {
+// ==========================================
+// 기준 프롬프트 (Base Prompt)
+// ==========================================
+const BASE_FEMALE_PROMPT = `Stunning idealized young Korean woman with doll-like perfect features, large captivating eyes, small v-line face, flawless porcelain skin, long silky black hair with soft waves flowing freely. Confident charismatic gaze, slight seductive alluring smile. Glamorous hourglass figure in elegant {COLOR} satin {OUTFIT} showing beautiful collarbone and shoulders, delicate gold accessories. Standing in {SETTING}. {MOOD_ATMOSPHERE}. Soft dreamy lighting. Korean beauty ideal, slightly stylized perfection, high fashion editorial, 8k resolution.`;
+
+const BASE_MALE_PROMPT = `Incredibly handsome idealized young Korean man with sharp perfect features, deep captivating eyes, strong jawline, flawless skin, styled dark hair. Confident charismatic gaze, charming slight smile. Athletic fit figure in elegant {COLOR} {OUTFIT}, sophisticated accessories. Standing in {SETTING}. {MOOD_ATMOSPHERE}. Soft cinematic lighting. Korean beauty ideal, slightly stylized perfection, high fashion editorial, 8k resolution.`;
+
+// ==========================================
+// 오행별 색상 & 분위기
+// ==========================================
+interface ElementStyle {
+    colors: string[];
+    settings: string[];
+    flowers: string[];
+    animals: string[];
+}
+
+const ELEMENT_STYLES: Record<SajuElement, ElementStyle> = {
     "Wood": {
-        style: "tall and slender, youthful energy",
-        colors: ["green accents", "natural earth tones", "fresh spring colors"],
-        vibe: "vibrant and energetic, like a fresh spring morning"
+        colors: ["emerald green", "forest green", "sage green", "olive"],
+        settings: ["trendy botanical cafe with hanging plants and wooden interior, golden sunlight streaming through"],
+        flowers: ["bamboo leaves", "fern fronds", "green ivy"],
+        animals: ["small bird perched nearby", "butterfly landing on shoulder"]
     },
     "Fire": {
-        style: "striking and charismatic, warm smile",
-        colors: ["warm red undertones", "golden highlights", "sunset orange"],
-        vibe: "passionate and magnetic, radiant presence"
+        colors: ["passionate red", "coral orange", "sunset pink", "burgundy"],
+        settings: ["rooftop terrace at golden hour with warm sunset glow and fairy lights"],
+        flowers: ["red roses", "orange marigolds", "fiery poppies"],
+        animals: ["phoenix feather accessory", "small flame wisps around"]
     },
     "Earth": {
-        style: "warm and approachable, gentle features",
-        colors: ["warm beige", "honey brown", "soft cream"],
-        vibe: "dependable and comforting, like a cozy embrace"
+        colors: ["warm beige", "honey brown", "terracotta", "cream"],
+        settings: ["cozy rustic cafe with warm lighting, exposed brick and lush greenery"],
+        flowers: ["sunflowers", "daisies", "wheat stalks"],
+        animals: ["small rabbit nearby", "gentle deer in background"]
     },
     "Metal": {
-        style: "sharp and refined, sophisticated look",
-        colors: ["silver accessories", "platinum blonde", "cool white"],
-        vibe: "elegant and polished, modern chic"
+        colors: ["silver white", "platinum gray", "pearl", "ice blue"],
+        settings: ["sleek modern gallery with minimalist decor and soft ambient lighting"],
+        flowers: ["white orchids", "silver eucalyptus", "crystal flowers"],
+        animals: ["white peacock feathers", "silver butterfly"]
     },
     "Water": {
-        style: "mysterious and deep, dreamy eyes",
-        colors: ["deep blue", "ocean teal", "midnight black hair"],
-        vibe: "enigmatic and wise, calm depth"
+        colors: ["deep ocean blue", "midnight navy", "aqua teal", "sapphire"],
+        settings: ["elegant oceanfront cafe with sea breeze, waves visible through large windows"],
+        flowers: ["blue hydrangeas", "water lilies", "lotus flowers"],
+        animals: ["koi fish in nearby pond", "gentle dolphins in background ocean"]
     }
 };
 
-// 운세 점수별 무드
-const SCORE_MOOD: Record<string, { expression: string; setting: string }> = {
-    "high": {      // 80-100
-        expression: "bright beaming smile, sparkling eyes",
-        setting: "golden hour sunlight, cherry blossoms falling"
+// ==========================================
+// 휴먼디자인 타입별 액세서리/소품
+// ==========================================
+const HD_TYPE_ACCESSORIES: Record<HDType, string[]> = {
+    "Generator": ["energetic pose mid-action", "glowing aura effect", "vibrant energy particles"],
+    "Manifesting Generator": ["dynamic multi-tasking pose", "multiple colorful elements swirling", "sparkling energy"],
+    "Projector": ["elegant reading glasses as hair accessory", "wise owl companion", "guiding light effect"],
+    "Manifestor": ["powerful confident stance", "magical staff or wand", "crown of light", "initiator energy"],
+    "Reflector": ["mirror-like crystal accessories", "moonlight glow", "ethereal translucent elements"]
+};
+
+// ==========================================
+// 에니어그램별 테마 아이템
+// ==========================================
+const ENNEAGRAM_ITEMS: Record<number, string[]> = {
+    1: ["elegant perfectionist styling", "clean symmetric composition", "pure white accents"],
+    2: ["heart-shaped jewelry", "warm caring expression", "soft pink accents"],
+    3: ["achievement trophy nearby", "spotlight effect", "star-quality aura"],
+    4: ["artistic unique accessories", "dramatic romantic styling", "creative paint splashes"],
+    5: ["sophisticated books nearby", "intellectual glasses", "mysterious depth"],
+    6: ["protective amulet accessory", "loyal companion animal", "safe cozy setting"],
+    7: ["playful confetti or bubbles", "adventure map elements", "joyful bright colors"],
+    8: ["powerful commanding presence", "flame or fire accessories", "bold warrior elements"],
+    9: ["peaceful zen elements", "harmony symbols", "soft flowing fabrics"]
+};
+
+// ==========================================
+// 운세 점수별 분위기
+// ==========================================
+interface MoodStyle {
+    atmosphere: string;
+    lighting: string;
+    effects: string;
+}
+
+const MOOD_STYLES: Record<string, MoodStyle> = {
+    "fantastic": {  // 90-100
+        atmosphere: "Magical fantasy atmosphere with sparkling golden dust, dreamy ethereal glow",
+        lighting: "Heavenly golden sunlight with rainbow lens flares, angelic lighting",
+        effects: "Glowing magical particles, cherry blossoms floating, starlight sparkles"
     },
-    "medium": {    // 50-79
-        expression: "gentle warm smile, soft gaze",
-        setting: "cafe terrace, afternoon sun"
+    "great": {  // 75-89
+        atmosphere: "Romantic dreamy atmosphere with soft warm ambiance",
+        lighting: "Beautiful golden hour lighting with gentle lens flares",
+        effects: "Soft petals floating, gentle bokeh lights"
     },
-    "low": {       // 0-49
-        expression: "mysterious slight smile, thoughtful look",
-        setting: "rainy window, cozy indoor lighting"
+    "good": {  // 60-74
+        atmosphere: "Pleasant bright atmosphere with cheerful vibe",
+        lighting: "Natural soft lighting with warm tones",
+        effects: "Subtle ambient light effects"
+    },
+    "neutral": {  // 40-59
+        atmosphere: "Calm balanced atmosphere",
+        lighting: "Even natural lighting",
+        effects: "Minimal effects, clean look"
+    },
+    "caution": {  // 20-39
+        atmosphere: "Mysterious moody atmosphere with slight tension",
+        lighting: "Dramatic shadows with cool undertones",
+        effects: "Slight fog or mist, dramatic contrast"
+    },
+    "dark": {  // 0-19
+        atmosphere: "Dark dramatic atmosphere with intense mysterious vibe",
+        lighting: "Dramatic noir lighting with deep shadows",
+        effects: "Dark smoke wisps, dramatic rain or storm backdrop"
     }
 };
 
-// 오늘의 테마별 액세서리/소품
-const THEME_ACCESSORIES: Record<string, string[]> = {
-    "성장": ["plant pot nearby", "green scarf"],
-    "열정": ["red lipstick", "heart-shaped earrings"],
-    "안정": ["cozy sweater", "warm coffee cup"],
-    "결단": ["sleek watch", "business casual"],
-    "지혜": ["glasses", "books in background"],
-    "사교": ["party lights", "champagne glass"],
-    "창의성": ["artist beret", "colorful background"],
-    "유연함": ["flowing dress", "beach in background"]
-};
+/**
+ * 운세 점수에서 분위기 등급 결정
+ */
+function getMoodTier(score: number): string {
+    if (score >= 90) return "fantastic";
+    if (score >= 75) return "great";
+    if (score >= 60) return "good";
+    if (score >= 40) return "neutral";
+    if (score >= 20) return "caution";
+    return "dark";
+}
 
 /**
  * 오늘의 이상형 이미지 프롬프트 생성
@@ -79,58 +155,69 @@ export function generateMatchImagePrompt(
 ): MatchImagePrompt {
     // 사용자 성별의 반대 성별로 이상형 생성
     const matchGender: "male" | "female" = profile.gender === "male" ? "female" : "male";
+    const basePrompt = matchGender === "female" ? BASE_FEMALE_PROMPT : BASE_MALE_PROMPT;
 
-    // 오늘의 오행 기반 외모 특징
-    const appearance = ELEMENT_APPEARANCE[dailyEnergy.element];
+    // 오늘의 오행 기반 스타일
+    const elementStyle = ELEMENT_STYLES[dailyEnergy.element];
+    const color = elementStyle.colors[Math.floor(Math.random() * elementStyle.colors.length)];
+    const setting = elementStyle.settings[0];
 
-    // 운세 점수에 따른 무드
-    const scoreTier = fortune.score >= 80 ? "high" : fortune.score >= 50 ? "medium" : "low";
-    const mood = SCORE_MOOD[scoreTier];
+    // 휴먼디자인 타입 소품
+    const hdType = profile.humanDesign?.type || "Generator";
+    const hdAccessory = HD_TYPE_ACCESSORIES[hdType][Math.floor(Math.random() * HD_TYPE_ACCESSORIES[hdType].length)];
 
-    // 키워드에서 액세서리 추출
-    const accessories: string[] = [];
-    fortune.keywords.forEach(keyword => {
-        const related = Object.entries(THEME_ACCESSORIES).find(([theme]) =>
-            keyword.includes(theme) || theme.includes(keyword)
-        );
-        if (related) {
-            accessories.push(related[1][Math.floor(Math.random() * related[1].length)]);
-        }
-    });
+    // 에니어그램 아이템
+    const enneagramType = profile.enneagram?.type || 7;
+    const enneagramItem = ENNEAGRAM_ITEMS[enneagramType]?.[0] || "joyful expression";
 
-    // 기본 액세서리 추가
-    if (accessories.length === 0) {
-        accessories.push("minimal elegant jewelry");
-    }
+    // 운세 점수 기반 분위기
+    const moodTier = getMoodTier(fortune.score);
+    const moodStyle = MOOD_STYLES[moodTier];
+    const moodScore = fortune.score >= 75 ? 2 : fortune.score >= 60 ? 1 : fortune.score >= 40 ? 0 : fortune.score >= 20 ? -1 : -2;
+
+    // 오행에 따른 추가 요소
+    const flower = elementStyle.flowers[Math.floor(Math.random() * elementStyle.flowers.length)];
+    const animal = elementStyle.animals[Math.floor(Math.random() * elementStyle.animals.length)];
+
+    // 의상 결정
+    const outfit = matchGender === "female"
+        ? "off-shoulder dress"
+        : "tailored blazer";
+
+    // 프롬프트 조합
+    const moodAtmosphereText = `${moodStyle.atmosphere}. ${moodStyle.lighting}. ${moodStyle.effects}`;
+
+    let prompt = basePrompt
+        .replace("{COLOR}", color)
+        .replace("{OUTFIT}", outfit)
+        .replace("{SETTING}", setting)
+        .replace("{MOOD_ATMOSPHERE}", moodAtmosphereText);
+
+    // 추가 요소들
+    const additionalElements = [
+        hdAccessory,
+        enneagramItem,
+        `${flower} decoration`,
+        animal
+    ].filter(Boolean).join(", ");
+
+    prompt += ` Additional elements: ${additionalElements}. NOT cartoon, NOT anime.`;
 
     // 핵심 특징 리스트
     const keyFeatures = [
-        appearance.style,
-        appearance.vibe,
-        mood.expression,
-        ...appearance.colors.slice(0, 2),
-        ...accessories.slice(0, 2)
+        `${color} outfit`,
+        hdAccessory,
+        enneagramItem,
+        moodTier + " mood",
+        flower
     ];
-
-    // 프롬프트 생성
-    const genderDesc = matchGender === "female"
-        ? "breathtakingly beautiful young Korean woman, stunning natural beauty"
-        : "incredibly handsome young Korean man, striking masculine features";
-
-    const prompt = `Portrait photo of a ${genderDesc}, ${appearance.style}, 
-        ${mood.expression}, ${appearance.vibe}.
-        Wearing stylish modern Korean fashion, ${accessories.join(", ")}.
-        ${mood.setting}. 
-        Colors: ${appearance.colors.join(", ")}.
-        High quality fashion photography, soft bokeh background, 
-        natural lighting, magazine quality, 8k resolution.
-        NOT cartoon, NOT anime, photorealistic, real person.`.replace(/\s+/g, " ").trim();
 
     return {
         prompt,
         gender: matchGender,
-        style: appearance.vibe,
-        keyFeatures
+        style: `${dailyEnergy.elementKorean} + ${hdType} + ${enneagramType}유형`,
+        keyFeatures,
+        moodScore
     };
 }
 
@@ -143,26 +230,14 @@ export function generateMatchDescription(
     dailyEnergy: DailyEnergy
 ): string {
     const genderWord = prompt.gender === "female" ? "그녀" : "그";
-    const zodiacKorean: Record<string, string> = {
-        "Rat": "쥐", "Ox": "소", "Tiger": "호랑이", "Rabbit": "토끼",
-        "Dragon": "용", "Snake": "뱀", "Horse": "말", "Goat": "양",
-        "Monkey": "원숭이", "Rooster": "닭", "Dog": "개", "Pig": "돼지"
-    };
 
-    const traits = prompt.keyFeatures.slice(0, 3).map(f => {
-        // 영어 특징을 한글로 간단히 변환
-        if (f.includes("warm")) return "따뜻한";
-        if (f.includes("mysterious")) return "신비로운";
-        if (f.includes("energetic")) return "활기찬";
-        if (f.includes("elegant")) return "우아한";
-        if (f.includes("charismatic")) return "카리스마 있는";
-        if (f.includes("gentle")) return "부드러운";
-        if (f.includes("deep")) return "깊이 있는";
-        if (f.includes("refined")) return "세련된";
-        return "";
-    }).filter(Boolean);
+    const moodDesc = prompt.moodScore >= 1
+        ? "환상적인 분위기로 만남이 기대되는"
+        : prompt.moodScore <= -1
+            ? "신비롭고 미스터리한 분위기의"
+            : "편안하고 자연스러운 분위기의";
 
     return `오늘 ${dailyEnergy.zodiacKorean}의 기운을 가진 ${genderWord}가 나타날 수 있어요.
-${traits.join(", ")} 분위기의 ${genderWord}와 눈이 마주칠지도 몰라요!
+${moodDesc} ${genderWord}와 눈이 마주칠지도 몰라요!
 #${fortune.keywords[0] || "설렘"} #오늘의짝꿍`;
 }
