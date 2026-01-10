@@ -33,7 +33,7 @@ export function MatchCharacterCard({
         <div style={styles.container}>
             <div style={styles.header}>
                 <span style={styles.icon}>💕</span>
-                <h3 style={styles.title}>오늘의 짝꿍은 이런 분?</h3>
+                <h3 style={styles.title}>{matchPrompt.title || "오늘의 운명 짝꿍"}</h3>
             </div>
 
             {/* 이미지 영역 */}
