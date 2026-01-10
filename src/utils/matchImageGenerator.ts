@@ -13,6 +13,7 @@
  */
 import type { UserProfile, FortuneResult, SajuElement, HDType } from "../types";
 import type { DailyEnergy } from "./dailyEnergy";
+import { analyzeSaju } from "./sajuEngine";
 
 export interface MatchImagePrompt {
     prompt: string;
@@ -267,8 +268,15 @@ export function generateMatchImagePrompt(
         basePrompt = isMature ? BASE_MALE_MATURE_PROMPT : BASE_MALE_YOUNG_PROMPT;
     }
 
-    // 나의 오행 (일주 기준)
-    const myElement = profile.saju?.dayMaster.element || dailyEnergy.element;
+    // 나의 오행 (생년월일로 직접 계산 - 프로필에 저장 안 되어 있어도 OK)
+    let myElement: SajuElement = dailyEnergy.element; // 기본 폴백
+    if (profile.saju?.dayMaster.element) {
+        myElement = profile.saju.dayMaster.element;
+    } else if (profile.birthDate) {
+        // 생년월일로 사주 계산
+        const calculatedSaju = analyzeSaju(profile.birthDate, profile.birthTime || "12:00");
+        myElement = calculatedSaju.dayMaster.element;
+    }
 
     // 짝궁 오행 계산 (나의 오행 + 오늘의 오행 상호작용)
     const matchElement = getMatchElement(myElement, dailyEnergy.element);
@@ -361,8 +369,14 @@ export function generateSelfImagePrompt(
         basePrompt = isMature ? BASE_MALE_MATURE_PROMPT : BASE_MALE_YOUNG_PROMPT;
     }
 
-    // 나의 오행 사용
-    const myElement = profile.saju?.dayMaster.element || dailyEnergy.element;
+    // 나의 오행 (생년월일로 직접 계산)
+    let myElement: SajuElement = dailyEnergy.element;
+    if (profile.saju?.dayMaster.element) {
+        myElement = profile.saju.dayMaster.element;
+    } else if (profile.birthDate) {
+        const calculatedSaju = analyzeSaju(profile.birthDate, profile.birthTime || "12:00");
+        myElement = calculatedSaju.dayMaster.element;
+    }
 
     const elementStyle = ELEMENT_STYLES[myElement];
     const setting = elementStyle.settings[0];
