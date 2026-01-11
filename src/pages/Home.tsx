@@ -209,9 +209,9 @@ export default function HomeScreen({
                 </div>
 
                 <div style={{ marginTop: 40, paddingBottom: 60, borderTop: "1px solid #f2f4f6", paddingTop: 32 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#333d4b", marginBottom: 8 }}>궁합 분석 시스템</h3>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#333d4b", marginBottom: 8 }}>💕 오늘의 연애 운세</h3>
                     <p style={{ fontSize: 13, color: "#8b95a1", lineHeight: 1.6 }}>
-                        나루 친구들 간의 오행 상생/상극 분석을 통해 매일 가장 잘 어울리는 '오늘의 꿍친'을 추천해 드립니다.
+                        나의 사주와 오늘의 기운을 분석하여 연애 운세를 알려드려요. 프리미엄 리포트에서는 운명의 짝꿍 이미지와 맞춤 플러팅 전략까지 무료로 확인할 수 있어요!
                     </p>
                 </div>
             </div>

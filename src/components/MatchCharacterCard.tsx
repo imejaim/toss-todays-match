@@ -1,16 +1,12 @@
-/**
- * 오늘의 짝꿍 이미지 카드 컴포넌트
- * AI 생성 이미지와 설명을 표시합니다.
- */
-import React from "react";
+import React, { useMemo } from "react";
 import type { MatchImagePrompt } from "../utils/matchImageGenerator";
 import { Button } from "./ui";
 
 interface Props {
-    matchPrompt: MatchImagePrompt;
+    matchPrompt: MatchImagePrompt | null;
     description: string;
-    imageUrl?: string;  // 미리 생성된 이미지 URL
-    onGenerateImage?: () => void;  // 이미지 생성 요청 콜백
+    imageUrl?: string;
+    onGenerateImage?: () => void;
     isGenerating?: boolean;
 }
 
@@ -21,85 +17,94 @@ export function MatchCharacterCard({
     onGenerateImage,
     isGenerating = false
 }: Props) {
-    // imageUrl이 있으면 바로 이미지 표시
     const showImage = !!imageUrl;
+
+    // 2. Deterministic Card Info (훅은 조건부 return 전에 호출되어야 함)
+    const cardInfo = useMemo(() => {
+        if (!matchPrompt) return { no: "NO.------", rarity: "ULTRA RARE" };
+
+        const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const seedValue = (matchPrompt.title || "Secret").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const cardSuffix = (seedValue % 900) + 100;
+
+        return {
+            no: `NO.${today}-${matchPrompt.gender === "female" ? "F" : "M"}${cardSuffix}`,
+            rarity: "ULTRA RARE"
+        };
+    }, [matchPrompt]);
+
+    const { no: cardNo, rarity: rarityGrade } = cardInfo;
+
+    // 1. Strict Guard (훅 호출 후에 조건부 return)
+    if (!matchPrompt) return null;
 
     return (
         <div style={styles.container}>
-            <div style={styles.header}>
-                <span style={styles.icon}>💕</span>
-                <h3 style={styles.title}>{matchPrompt.title || "오늘의 운명 짝꿍"}</h3>
-            </div>
+            <div style={styles.cardFrame}>
+                {/* Header Decoration */}
+                <div style={styles.cardTopDecoration}>
+                    <span style={styles.rarityBadge}>{rarityGrade}</span>
+                    <span style={styles.cardId}>{cardNo}</span>
+                </div>
 
-            {/* 이미지 영역 */}
-            <div style={styles.imageArea}>
-                {showImage && imageUrl ? (
-                    <div style={styles.imageWrapper}>
-                        <img
-                            src={imageUrl}
-                            alt="오늘의 이상형"
-                            style={styles.image}
-                        />
-                        <div style={styles.imageOverlay}>
-                            <span style={styles.genderBadge}>
-                                {matchPrompt.gender === "female" ? "👩" : "👨"}
-                                {matchPrompt.gender === "female" ? "오늘의 그녀" : "오늘의 그"}
+                {/* Image Area */}
+                <div style={styles.imageArea}>
+                    {showImage && imageUrl ? (
+                        <div style={styles.imageWrapper}>
+                            <img src={imageUrl} alt="오늘의 이상형" style={styles.image} />
+                            <div style={styles.imageOverlay}>
+                                <span style={styles.genderBadge}>
+                                    {matchPrompt.gender === "female" ? "♀️ DESTINY HER" : "♂️ DESTINY HIM"}
+                                </span>
+                            </div>
+                            <div style={styles.shimmerLayer}></div>
+                        </div>
+                    ) : (
+                        <div style={styles.placeholder}>
+                            <span style={styles.placeholderEmoji}>
+                                {matchPrompt.gender === "female" ? "👩‍🦰" : "👨‍🦱"}
                             </span>
+                            <p style={styles.placeholderText}>
+                                당신의 연애 세포가 자극되는 인연을 찾는 중...
+                            </p>
+                            {onGenerateImage && (
+                                <Button
+                                    variant="fill"
+                                    color="primary"
+                                    onClick={onGenerateImage}
+                                    disabled={isGenerating}
+                                    style={styles.generateButton}
+                                >
+                                    {isGenerating ? "✨ 생성 중..." : "✨ 운명의 짝꿍 보기"}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Content Area */}
+                <div style={styles.cardInfoArea}>
+                    <div style={styles.cardTitleLine}>
+                        <h3 style={styles.title}>{matchPrompt.title || "Secret Soulmate"}</h3>
+                        <div style={styles.elementBadge}>
+                            {matchPrompt.matchElement === "Wood" && "🌳"}
+                            {matchPrompt.matchElement === "Fire" && "🔥"}
+                            {matchPrompt.matchElement === "Earth" && "🌍"}
+                            {matchPrompt.matchElement === "Metal" && "✨"}
+                            {matchPrompt.matchElement === "Water" && "💧"}
                         </div>
                     </div>
-                ) : (
-                    <div style={styles.placeholder}>
-                        <span style={styles.placeholderEmoji}>
-                            {matchPrompt.gender === "female" ? "👩‍🦰" : "👨‍🦱"}
-                        </span>
-                        <p style={styles.placeholderText}>
-                            오늘 만날 수 있는 이상형의 모습을<br />
-                            AI가 그려드릴게요!
-                        </p>
-                        {onGenerateImage && (
-                            <Button
-                                variant="fill"
-                                color="primary"
-                                onClick={onGenerateImage}
-                                disabled={isGenerating}
-                                style={styles.generateButton}
-                            >
-                                {isGenerating ? "✨ 그리는 중..." : "✨ 오늘의 짝꿍 보기"}
-                            </Button>
-                        )}
+
+                    <p style={styles.description}>{description}</p>
+
+                    <div style={styles.cardFooter}>
+                        <div style={styles.featureTags}>
+                            {(matchPrompt.keyFeatures || []).slice(0, 3).map((feature, idx) => (
+                                <span key={idx} style={styles.featureTag}>#{feature}</span>
+                            ))}
+                        </div>
+                        <span style={styles.saveHint}>꾹 눌러 이미지 저장 📥</span>
                     </div>
-                )}
-            </div>
-
-            {/* 설명 영역 */}
-            <div style={styles.descriptionArea}>
-                <p style={styles.description}>{description}</p>
-
-                {/* 특징 태그 */}
-                <div style={styles.featureTags}>
-                    {matchPrompt.keyFeatures.slice(0, 4).map((feature, idx) => {
-                        // 영어 특징을 한글로 간단히 변환
-                        let koreanFeature = feature;
-                        if (feature.includes("warm")) koreanFeature = "따뜻한";
-                        else if (feature.includes("mysterious")) koreanFeature = "신비로운";
-                        else if (feature.includes("energetic")) koreanFeature = "활기찬";
-                        else if (feature.includes("elegant")) koreanFeature = "우아한";
-                        else if (feature.includes("charismatic")) koreanFeature = "카리스마";
-                        else if (feature.includes("gentle")) koreanFeature = "부드러운";
-                        else if (feature.includes("deep")) koreanFeature = "깊이있는";
-                        else if (feature.includes("refined")) koreanFeature = "세련된";
-                        else if (feature.includes("smile")) koreanFeature = "미소";
-                        else if (feature.includes("tall")) koreanFeature = "늘씬한";
-                        else koreanFeature = "";
-
-                        if (!koreanFeature) return null;
-
-                        return (
-                            <span key={idx} style={styles.featureTag}>
-                                #{koreanFeature}
-                            </span>
-                        );
-                    })}
                 </div>
             </div>
         </div>
@@ -108,101 +113,157 @@ export function MatchCharacterCard({
 
 const styles: { [k: string]: React.CSSProperties } = {
     container: {
+        marginBottom: 32,
+        perspective: "1000px"
+    },
+    cardFrame: {
         backgroundColor: "#fff",
-        borderRadius: 24,
-        padding: 20,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-        marginBottom: 24
+        borderRadius: 28,
+        padding: "16px",
+        boxShadow: "0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)",
+        background: "linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)",
+        border: "4px solid #fff",
+        position: "relative",
     },
-    header: {
+    cardTopDecoration: {
         display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: 10,
-        marginBottom: 16
+        padding: "0 4px 12px 4px"
     },
-    icon: {
-        fontSize: 24
+    rarityBadge: {
+        fontSize: 10,
+        fontWeight: 800,
+        color: "#fff",
+        backgroundColor: "#3182f6",
+        padding: "3px 8px",
+        borderRadius: 6,
     },
-    title: {
-        fontSize: 17,
-        fontWeight: 700,
-        color: "#1e293b",
-        margin: 0
+    cardId: {
+        fontFamily: "monospace",
+        fontSize: 11,
+        color: "#94a3b8",
+        fontWeight: 600
     },
     imageArea: {
-        marginBottom: 16
+        borderRadius: 20,
+        overflow: "hidden",
+        backgroundColor: "#f8fafc",
+        position: "relative"
     },
     imageWrapper: {
         position: "relative",
-        borderRadius: 16,
+        width: "100%",
+        paddingTop: "100%", // Maintain 1:1 ratio without aspectRatio
         overflow: "hidden"
     },
     image: {
+        position: "absolute",
+        top: 0,
+        left: 0,
         width: "100%",
-        height: "auto",
-        borderRadius: 16,
-        display: "block"
+        height: "100%",
+        objectFit: "cover",
+    },
+    shimmerLayer: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)",
+        backgroundSize: "200% 100%",
+        pointerEvents: "none"
     },
     imageOverlay: {
         position: "absolute",
-        bottom: 12,
+        top: 12,
         left: 12,
-        right: 12,
-        display: "flex",
-        justifyContent: "flex-start"
+        zIndex: 2
     },
     genderBadge: {
-        backgroundColor: "rgba(255,255,255,0.9)",
-        backdropFilter: "blur(8px)",
-        padding: "6px 12px",
-        borderRadius: 20,
-        fontSize: 13,
-        fontWeight: 600,
-        color: "#334155"
+        backgroundColor: "rgba(0,0,0,0.6)",
+        padding: "4px 10px",
+        borderRadius: 8,
+        fontSize: 11,
+        fontWeight: 700,
+        color: "#fff",
     },
-    placeholder: {
-        backgroundColor: "#fdf2f8",
-        borderRadius: 16,
-        padding: "40px 20px",
-        textAlign: "center",
-        border: "2px dashed #fbcfe8"
+    cardInfoArea: {
+        padding: "16px 8px 8px 8px"
     },
-    placeholderEmoji: {
-        fontSize: 48,
-        marginBottom: 16,
-        display: "block"
+    cardTitleLine: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 10
     },
-    placeholderText: {
-        fontSize: 14,
-        color: "#9d174d",
-        lineHeight: 1.6,
-        margin: "0 0 20px 0"
+    title: {
+        fontSize: 19,
+        fontWeight: 800,
+        color: "#0f172a",
+        margin: 0,
     },
-    generateButton: {
-        borderRadius: 20,
-        padding: "12px 24px",
-        fontSize: 15
-    },
-    descriptionArea: {
-        padding: "12px 0 0 0"
+    elementBadge: {
+        fontSize: 20,
     },
     description: {
-        fontSize: 15,
-        lineHeight: 1.7,
-        color: "#334155",
-        margin: "0 0 12px 0",
-        whiteSpace: "pre-wrap"
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: "#475569",
+        marginBottom: 16,
+    },
+    cardFooter: {
+        borderTop: "1px dashed #e2e8f0",
+        paddingTop: 12,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8
     },
     featureTags: {
         display: "flex",
         flexWrap: "wrap",
-        gap: 8
+        gap: 6
     },
     featureTag: {
-        fontSize: 12,
-        color: "#be185d",
-        backgroundColor: "#fdf2f8",
-        padding: "4px 10px",
-        borderRadius: 10
+        fontSize: 11,
+        color: "#64748b",
+        backgroundColor: "#f1f5f9",
+        padding: "2px 8px",
+        borderRadius: 6,
+        fontWeight: 600
+    },
+    saveHint: {
+        fontSize: 10,
+        textAlign: "center",
+        color: "#94a3b8",
+        marginTop: 4,
+    },
+    placeholder: {
+        padding: "60px 20px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        height: "300px"
+    },
+    placeholderEmoji: {
+        fontSize: 56,
+        marginBottom: 16
+    },
+    placeholderText: {
+        fontSize: 14,
+        color: "#64748b",
+        lineHeight: 1.6,
+        margin: "0 0 24px 0"
+    },
+    generateButton: {
+        height: 48,
+        borderRadius: 12,
+        padding: "0 24px",
+        fontSize: 15,
+        fontWeight: 700
     }
 };

@@ -41,6 +41,8 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
     const interaction = useMemo(() => analyzeInteraction(myElement, dailyEnergy.element), [myElement, dailyEnergy.element]);
     const themes = useMemo(() => getDailyTheme(dailyEnergy), [dailyEnergy]);
 
+    // 오늘의 운명 짝꿍 정보는 PremiumReport에서만 사용 (TodayFortune에서는 티저만 표시)
+
     // 공유 콘텐츠
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const shareContent = createFortuneShareContent(profile, fortune);
@@ -62,6 +64,8 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     themes={themes}
                     compact
                 />
+
+                {/* 오늘의 운명 짝꿍 카드는 프리미엄 리포트에서만 공개 */}
 
                 {/* Character Avatar on Fortune Screen */}
                 <div style={{
@@ -130,10 +134,7 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     </p>
                 </div>
 
-                {/* 공유 버튼 */}
-                <ShareButtons content={shareContent} />
-
-                <div style={{ marginTop: 24 }}></div>
+                {/* 버튼 영역: 더 자세한 연애 비법 보기 → 공유하기 → 홈으로 */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <Button
                         variant="fill"
@@ -143,6 +144,9 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     >
                         더 자세한 연애 비법 보기 &rarr;
                     </Button>
+
+                    {/* 공유 버튼 */}
+                    <ShareButtons content={shareContent} />
 
                     <Button
                         variant="weak"

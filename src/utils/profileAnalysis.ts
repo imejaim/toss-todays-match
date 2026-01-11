@@ -140,22 +140,24 @@ const accessoryKoreanMap: Record<string, string> = {
 export const generateCharacterPrompts = (
     profile: UserProfile
 ): CharacterVisuals => {
-    // 1. Species Priority: Preference > Enneagram > Zodiac
+    // 1. Species Priority: Preference > Saju Zodiac (Year) > Enneagram
     let species = profile.customization?.preferredSpecies || "Unknown";
 
+    // 사주 띠 우선 (년주 기준이 일반적인 "띠")
+    if (species === "Unknown" && profile.saju) {
+        const yearZodiac = profile.saju.pillars?.year?.zodiac;
+        if (yearZodiac) {
+            species = getZodiacSpecies(yearZodiac);
+        }
+    }
+
+    // 에니어그램은 성격 타입이므로, 띠가 없을 때만 사용
     if (species === "Unknown" && profile.enneagram) {
         species = getSpeciesByEnneagram(profile.enneagram.type);
     }
 
-    if (species === "Unknown" && profile.saju) {
-        // Try Day branch zodiac first, then Year
-        species = profile.saju.dayMaster.zodiac ? getZodiacSpecies(profile.saju.dayMaster.zodiac) : "Unknown";
-        if (species === "Unknown") {
-            species = profile.saju.pillars.year.zodiac ? getZodiacSpecies(profile.saju.pillars.year.zodiac) : "Monkey"; // Default fallback
-        }
-    }
-
-    if (species === "Unknown") species = "Monkey"; // Final Fallback
+    // 최종 폴백: 용 (가장 일반적인 이미지)
+    if (species === "Unknown") species = "Dragon";
 
     // 2. Adjective
     const dayMasterElement = profile.saju?.dayMaster.element || "Water";

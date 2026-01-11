@@ -421,22 +421,42 @@ export function generateSelfImagePrompt(
 }
 
 /**
- * 짧은 설명 텍스트 생성
+ * 짧은 설명 텍스트 생성 (나의 기운 + 오늘의 기운 반영)
  */
 export function generateMatchDescription(
     prompt: MatchImagePrompt,
-    fortune: FortuneResult,
+    _fortune: FortuneResult, // prompt.moodScore에 이미 반영됨
     dailyEnergy: DailyEnergy
 ): string {
     const genderWord = prompt.gender === "female" ? "그녀" : "그";
 
-    const moodDesc = prompt.moodScore >= 1
-        ? "환상적인 분위기로 만남이 기대되는"
-        : prompt.moodScore <= -1
-            ? "신비롭고 미스터리한 분위기의"
-            : "편안하고 자연스러운 분위기의";
+    // 오행별 한글명
+    const elementKorean: Record<SajuElement, string> = {
+        "Wood": "나무(木)", "Fire": "불(火)", "Earth": "흙(土)",
+        "Metal": "쇠(金)", "Water": "물(水)"
+    };
 
-    return `오늘 ${dailyEnergy.zodiacKorean}의 기운을 가진 ${genderWord}가 나타날 수 있어요.
-${moodDesc} ${genderWord}와 눈이 마주칠지도 몰라요!
-#${fortune.keywords[0] || "설렘"} #오늘의운명짝꿍`;
+    // 짝꿍 오행 특성
+    const elementTraits: Record<SajuElement, string> = {
+        "Wood": "성장과 생명력 넘치는",
+        "Fire": "열정적이고 따뜻한",
+        "Earth": "든든하고 안정적인",
+        "Metal": "세련되고 결단력 있는",
+        "Water": "지혜롭고 유연한"
+    };
+
+    const matchTrait = elementTraits[prompt.matchElement];
+    const matchElementName = elementKorean[prompt.matchElement];
+
+    // 운세 점수에 따른 만남 분위기
+    const moodDesc = prompt.moodScore >= 1
+        ? "환상적인 분위기 속에서 운명적인 만남이 기대돼요!"
+        : prompt.moodScore <= -1
+            ? "신비롭고 강렬한 인상을 주는 만남이 될 거예요."
+            : "편안하고 자연스러운 교감이 이루어질 거예요.";
+
+    // 오늘의 기운과 오행 조합
+    const todaySign = dailyEnergy.zodiacKorean; // 닭, 용 등
+
+    return `오늘 ${todaySign}의 기운과 함께 ${matchTrait} ${genderWord}가 나타날 수 있어요. ${moodDesc} #${matchElementName.replace(/[()]/g, '')} #오늘의운명짝꿍`;
 }
