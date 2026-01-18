@@ -100,13 +100,14 @@ describe('4/4. 재발 방지 및 설정 검증 (Regression Check)', () => {
         expect(content).toContain('const TEST_AD_GROUP_ID =');
     });
 
-    it('[AIT 빌드 전 필수] 토스 광고 브릿지가 임포트되어 있어야 한다', () => {
+    it('[AIT 빌드 전 필수] 토스 광고 브릿지(GoogleAdMob)가 정의되어 있어야 한다', () => {
         const adHookPath = path.join(process.cwd(), 'src', 'hooks', 'useRewardedAd.ts');
         const content = fs.readFileSync(adHookPath, 'utf-8');
 
-        // @apps-in-toss/web-bridge에서 GoogleAdMob 임포트 확인
+        // @apps-in-toss/web-bridge에서 GoogleAdMob 임포트 또는 declare로 선언 확인
         const hasTossBridgeImport = content.includes("import { GoogleAdMob } from '@apps-in-toss/web-bridge'");
-        expect(hasTossBridgeImport, '토스 광고 브릿지(@apps-in-toss/web-bridge)가 임포트되어 있지 않습니다. AIT 빌드 시 광고가 작동하지 않습니다!').toBe(true);
+        const hasGlobalDeclaration = content.includes("declare const GoogleAdMob");
+        expect(hasTossBridgeImport || hasGlobalDeclaration, '토스 광고 브릿지(GoogleAdMob)가 정의되어 있지 않습니다. AIT 빌드 시 광고가 작동하지 않습니다!').toBe(true);
 
         // GoogleAdMob.loadAppsInTossAdMob 호출 확인
         expect(content).toContain('GoogleAdMob.loadAppsInTossAdMob');

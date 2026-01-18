@@ -11,6 +11,8 @@ import { TermsScreen } from "./pages/Terms";
 import { PrivacyScreen } from "./pages/Privacy";
 import { calcTodayFortune } from "./utils/fortune";
 import Home from "./pages/Home";
+import { analyzeSaju } from "./utils/sajuEngine";
+import { calculateHumanDesign } from "./utils/hdEngine";
 
 function App() {
   // 1. My Profile State
@@ -51,15 +53,32 @@ function App() {
   const location = useLocation();
 
   // 4. Storage Synced Setters
+  // 프로필 저장 시 사주/HD 재계산 함수
+  const recalculateProfile = (profile: UserProfile): UserProfile => {
+    if (!profile.birthDate) return profile;
+
+    // 사주 재계산
+    const saju = analyzeSaju(profile.birthDate, profile.birthTime || "12:00");
+
+    // 휴먼디자인 재계산
+    const humanDesign = calculateHumanDesign(profile.birthDate, profile.birthTime || "12:00");
+
+    return {
+      ...profile,
+      saju,
+      humanDesign
+    };
+  };
+
   const handleProfileChange = (updatedProfile: UserProfile) => {
-    const finalProfile = { ...updatedProfile, id: "me" };
+    const finalProfile = recalculateProfile({ ...updatedProfile, id: "me" });
     setProfile(finalProfile);
     localStorage.setItem("userProfile", JSON.stringify(finalProfile));
     navigate("/");
   };
 
   const handleAddFriend = (newFriend: UserProfile) => {
-    const friendWithId = { ...newFriend, id: Date.now().toString() };
+    const friendWithId = recalculateProfile({ ...newFriend, id: Date.now().toString() });
     const newList = [...friends, friendWithId];
     setFriends(newList);
     localStorage.setItem("friendsList", JSON.stringify(newList));
@@ -67,7 +86,8 @@ function App() {
   };
 
   const handleUpdateFriend = (updatedFriend: UserProfile) => {
-    const newList = friends.map(f => f.id === updatedFriend.id ? updatedFriend : f);
+    const recalculatedFriend = recalculateProfile(updatedFriend);
+    const newList = friends.map(f => f.id === recalculatedFriend.id ? recalculatedFriend : f);
     setFriends(newList);
     localStorage.setItem("friendsList", JSON.stringify(newList));
     navigate("/");
@@ -134,6 +154,7 @@ function App() {
               onSave={handleAddFriend}
               title="새 꿍친 추가"
               ctaLabel="추가하기"
+              isFriend={true}
             />
           }
         />
@@ -194,6 +215,7 @@ function FriendEditWrapper({ friends, onUpdate }: { friends: UserProfile[], onUp
       onSave={onUpdate}
       title="꿍친 프로필 수정"
       ctaLabel="수정완료"
+      isFriend={true}
     />
   );
 }

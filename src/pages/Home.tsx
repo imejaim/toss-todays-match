@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, ListHeader } from "../components/ui";
 import type { UserProfile } from "../types";
 import { generateCharacterPrompts, getElementEmoji } from "../utils/profileAnalysis";
 import { calculateAffinity, getBestMatch } from "../utils/affinity";
+import { analyzeInnateCharacter } from "../utils/innateCharacter";
 
 // Get zodiac emoji from species
 function getZodiacEmoji(species: string): string {
@@ -38,6 +39,15 @@ export default function HomeScreen({
     const zodiacEmoji = character ? getZodiacEmoji(character.species) : "✨";
     const elementEmoji = character ? getElementEmoji(character.element) : "✨";
 
+    // 에너지 분석 (확장 시 표시)
+    const energyAnalysis = profile.nickname ? analyzeInnateCharacter(profile) : null;
+
+    // 프로필 카드 확장 상태
+    const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+
+    // 확장된 친구 카드 ID (null이면 모두 접힘)
+    const [expandedFriendId, setExpandedFriendId] = useState<string | null>(null);
+
     // 2. Best Match Logic
     const bestMatch = (profile.nickname && friends.length > 0) ? getBestMatch(profile, friends) : null;
 
@@ -48,9 +58,23 @@ export default function HomeScreen({
                     매일 만나는<br />나의 연애 점수
                 </h1>
 
-                {/* My Character Card */}
-                <div style={cardStyle}>
-                    <ListHeader title="내 연애 프로필" />
+                {/* My Character Card - 탭하면 확장 */}
+                <div
+                    style={{
+                        ...cardStyle,
+                        cursor: profile.nickname ? "pointer" : "default",
+                        transition: "all 0.3s ease"
+                    }}
+                    onClick={() => profile.nickname && setIsProfileExpanded(!isProfileExpanded)}
+                >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <ListHeader title="내 연애 프로필" />
+                        {profile.nickname && (
+                            <span style={{ fontSize: 12, color: "#8b95a1" }}>
+                                {isProfileExpanded ? "▲ 접기" : "▼ 상세보기"}
+                            </span>
+                        )}
+                    </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
                         <div style={{
                             width: 64,
@@ -91,7 +115,69 @@ export default function HomeScreen({
                         </div>
                     </div>
 
-                    <div style={{ marginTop: 24, display: "flex", gap: 8 }}>
+                    {/* 확장된 에너지 분석 상세 정보 */}
+                    {isProfileExpanded && energyAnalysis && (
+                        <div style={{
+                            marginTop: 20,
+                            paddingTop: 20,
+                            borderTop: "1px solid #f2f4f6"
+                        }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#191f28", marginBottom: 12 }}>
+                                ✨ 나의 타고난 에너지
+                            </div>
+
+                            {/* 뱃지들 */}
+                            <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                                {energyAnalysis.badges.map((badge, i) => (
+                                    <div key={i} style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 4,
+                                        backgroundColor: "#f9fafb",
+                                        padding: "6px 12px",
+                                        borderRadius: 20,
+                                        fontSize: 13
+                                    }}>
+                                        <span>{badge.emoji}</span>
+                                        <span style={{ fontWeight: 600, color: "#191f28" }}>{badge.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* 설명 */}
+                            <div style={{
+                                backgroundColor: "#f2f8ff",
+                                borderRadius: 12,
+                                padding: 16,
+                                marginBottom: 12
+                            }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: "#3182f6", marginBottom: 4 }}>
+                                    💡 {energyAnalysis.elementDescription.title}
+                                </div>
+                                <p style={{ fontSize: 13, color: "#4e5968", lineHeight: 1.6, margin: 0 }}>
+                                    {energyAnalysis.summaryText}
+                                </p>
+                            </div>
+
+                            {/* 특성 키워드 */}
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {energyAnalysis.elementDescription.traits.map((trait, i) => (
+                                    <span key={i} style={{
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        color: "#3182f6",
+                                        backgroundColor: "#eff6ff",
+                                        padding: "4px 10px",
+                                        borderRadius: 16
+                                    }}>
+                                        #{trait}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: 24, display: "flex", gap: 8 }} onClick={(e) => e.stopPropagation()}>
                         <Button style={{ flex: 2 }} variant="fill" color="primary" onClick={onGoTodayFortune}>
                             운세 보기
                         </Button>
@@ -164,43 +250,131 @@ export default function HomeScreen({
                             {friends.map(friend => {
                                 const fChar = generateCharacterPrompts(friend);
                                 const affinity = profile.nickname ? calculateAffinity(profile, friend) : null;
+                                const friendEnergy = analyzeInnateCharacter(friend);
+                                const isExpanded = expandedFriendId === friend.id;
 
                                 return (
-                                    <div key={friend.id} style={friendCardStyle}>
-                                        <div style={{
-                                            width: 48,
-                                            height: 48,
-                                            borderRadius: "50%",
-                                            backgroundColor: fChar.mainColor,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontSize: 24
-                                        }}>
-                                            {getZodiacEmoji(fChar.species)}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                <span style={{ fontWeight: 600, color: "#333d4b" }}>{friend.nickname}</span>
-                                                {affinity && (
-                                                    <span style={{
-                                                        fontSize: 11,
-                                                        color: "#3182f6",
-                                                        backgroundColor: "#eff6ff",
-                                                        padding: "1px 6px",
-                                                        borderRadius: 8,
-                                                        fontWeight: 700
-                                                    }}>
-                                                        {affinity.score}점
-                                                    </span>
-                                                )}
+                                    <div
+                                        key={friend.id}
+                                        style={{
+                                            ...friendCardStyle,
+                                            flexDirection: "column",
+                                            cursor: "pointer",
+                                            transition: "all 0.3s ease"
+                                        }}
+                                        onClick={() => setExpandedFriendId(isExpanded ? null : friend.id)}
+                                    >
+                                        {/* 기본 정보 (항상 표시) */}
+                                        <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+                                            <div style={{
+                                                width: 48,
+                                                height: 48,
+                                                borderRadius: "50%",
+                                                backgroundColor: fChar.mainColor,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: 24
+                                            }}>
+                                                {getZodiacEmoji(fChar.species)}
                                             </div>
-                                            <p style={{ fontSize: 12, color: "#6b7684", margin: 0 }}>{fChar.speciesKorean} / {fChar.elementName}</p>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                    <span style={{ fontWeight: 600, color: "#333d4b" }}>{friend.nickname}</span>
+                                                    {affinity && (
+                                                        <span style={{
+                                                            fontSize: 11,
+                                                            color: "#3182f6",
+                                                            backgroundColor: "#eff6ff",
+                                                            padding: "1px 6px",
+                                                            borderRadius: 8,
+                                                            fontWeight: 700
+                                                        }}>
+                                                            {affinity.score}점
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p style={{ fontSize: 12, color: "#6b7684", margin: 0 }}>{fChar.speciesKorean} / {fChar.elementName}</p>
+                                            </div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                                                <span onClick={() => onEditFriend(friend.id)} style={actionBtnStyle}>수정</span>
+                                                <span onClick={() => onDeleteFriend(friend.id)} style={{ ...actionBtnStyle, color: "#f04452" }}>삭제</span>
+                                            </div>
                                         </div>
-                                        <div style={{ display: "flex", gap: 8 }}>
-                                            <span onClick={() => onEditFriend(friend.id)} style={actionBtnStyle}>수정</span>
-                                            <span onClick={() => onDeleteFriend(friend.id)} style={{ ...actionBtnStyle, color: "#f04452" }}>삭제</span>
+
+                                        {/* 확장 표시 (상세보기/접기) */}
+                                        <div style={{
+                                            textAlign: "center",
+                                            fontSize: 11,
+                                            color: "#8b95a1",
+                                            marginTop: 8,
+                                            paddingTop: 8,
+                                            borderTop: isExpanded ? "none" : "1px dashed #e5e8eb"
+                                        }}>
+                                            {isExpanded ? "▲ 접기" : "▼ 상세보기"}
                                         </div>
+
+                                        {/* 확장된 에너지 분석 상세 정보 */}
+                                        {isExpanded && friendEnergy && (
+                                            <div style={{
+                                                marginTop: 12,
+                                                paddingTop: 16,
+                                                borderTop: "1px solid #e5e8eb",
+                                                width: "100%"
+                                            }}>
+                                                <div style={{ fontSize: 13, fontWeight: 700, color: "#191f28", marginBottom: 10 }}>
+                                                    ✨ {friend.nickname}의 타고난 에너지
+                                                </div>
+
+                                                {/* 뱃지들 */}
+                                                <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                                                    {friendEnergy.badges.map((badge, i) => (
+                                                        <div key={i} style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            gap: 3,
+                                                            backgroundColor: "#fff",
+                                                            padding: "4px 10px",
+                                                            borderRadius: 16,
+                                                            fontSize: 12,
+                                                            border: "1px solid #e5e8eb"
+                                                        }}>
+                                                            <span>{badge.emoji}</span>
+                                                            <span style={{ fontWeight: 600, color: "#191f28" }}>{badge.label}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* 설명 */}
+                                                <div style={{
+                                                    backgroundColor: "#fff",
+                                                    borderRadius: 10,
+                                                    padding: 12,
+                                                    marginBottom: 10,
+                                                    border: "1px solid #e5e8eb"
+                                                }}>
+                                                    <p style={{ fontSize: 12, color: "#4e5968", lineHeight: 1.5, margin: 0 }}>
+                                                        {friendEnergy.summaryText}
+                                                    </p>
+                                                </div>
+
+                                                {/* 특성 키워드 */}
+                                                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                                    {friendEnergy.elementDescription.traits.map((trait, i) => (
+                                                        <span key={i} style={{
+                                                            fontSize: 11,
+                                                            fontWeight: 600,
+                                                            color: "#3182f6",
+                                                            backgroundColor: "#eff6ff",
+                                                            padding: "3px 8px",
+                                                            borderRadius: 12
+                                                        }}>
+                                                            #{trait}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

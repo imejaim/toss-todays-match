@@ -1,6 +1,11 @@
 # 📄 Project Status Report (v0.2.0)
 
-## 📌 Overview
+> ⚠️ **DEPRECATED**: 이 문서는 `docs/07_RELEASE_HISTORY.md`로 통합되었습니다.  
+> 최신 버전 히스토리는 **07_RELEASE_HISTORY.md**를 참조하세요.
+
+---
+
+## 📌 Overview (구 버전 - 참고용)
 현재 프로젝트는 **토스 인앱 환경**과 **일반 웹 브라우저 환경** 모두에서 완벽하게 작동하는 **Universal Web Version (v0.2.0)** 단계에 도달했습니다.
 
 ## 🚀 Version History

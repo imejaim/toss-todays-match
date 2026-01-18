@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import type { UserProfile, FortuneResult } from "../types";
 import { useRewardedAd } from "../hooks/useRewardedAd";
+import { useTossShare } from "../hooks/useTossShare";
 import { getDetailedFortune } from "../utils/llm";
 import { generateMatchImagePrompt, generateMatchDescription } from "../utils/matchImageGenerator";
 import { getTodayEnergy } from "../utils/dailyEnergy";
@@ -35,6 +36,9 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
 
     // 광고 훅 (토스/웹 자동 분기)
     const { loading, showRewardAd } = useRewardedAd();
+
+    // 공유 훅 (토스/웹 자동 분기)
+    const { share: tossShare } = useTossShare();
 
     // 1. Data Calculation
     const dailyEnergy = useMemo(() => getTodayEnergy(), []);
@@ -91,16 +95,21 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
         });
     };
 
-    const handleShare = () => {
+    const handleShare = async () => {
         if (!shareContent) return;
-        if (navigator.share) {
-            navigator.share({
-                title: shareContent.title,
-                text: shareContent.text,
-                url: window.location.href
-            }).catch(() => { });
-        } else {
-            alert("공유하기를 지원하지 않는 브라우저입니다.");
+
+        const shareText = `${shareContent.title}\n\n${shareContent.text}`;
+
+        const result = await tossShare({
+            message: shareText,
+            deepLinkPath: 'premium-report',
+            ogImageUrl: undefined  // TODO: OG 이미지 URL 추가 가능
+        });
+
+        if (result === 'copied') {
+            alert('링크가 복사되었습니다!');
+        } else if (result === 'failed') {
+            alert('공유하기에 실패했습니다.');
         }
     };
 
