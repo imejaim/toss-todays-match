@@ -51,7 +51,10 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
 
     const matchImageUrl = useMemo(() => {
         if (!matchPrompt) return "";
-        return `/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_01.png`;
+        // 1~3 사이 랜덤 선택 (이미지 바리에이션)
+        const variant = Math.floor(Math.random() * 3) + 1;
+        const variantStr = variant.toString().padStart(2, '0');
+        return `/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_${variantStr}.png`;
     }, [matchPrompt]);
 
     const shareContent = useMemo(() => {
