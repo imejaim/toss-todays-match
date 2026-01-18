@@ -49,12 +49,15 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
         return generateMatchDescription(matchPrompt, fortune, dailyEnergy);
     }, [matchPrompt, fortune, dailyEnergy]);
 
+    // GitHub에서 이미지 로드 (이미지 추가 시 앱 재출시 불필요)
+    const GITHUB_IMAGE_BASE = 'https://raw.githubusercontent.com/imejaim/toss-todays-match/main/public';
+
     const matchImageUrl = useMemo(() => {
         if (!matchPrompt) return "";
         // 1~3 사이 랜덤 선택 (이미지 바리에이션)
         const variant = Math.floor(Math.random() * 3) + 1;
         const variantStr = variant.toString().padStart(2, '0');
-        return `/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_${variantStr}.png`;
+        return `${GITHUB_IMAGE_BASE}/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_${variantStr}.png`;
     }, [matchPrompt]);
 
     const shareContent = useMemo(() => {
