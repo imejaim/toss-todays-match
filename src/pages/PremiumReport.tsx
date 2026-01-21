@@ -29,10 +29,16 @@ function markdownToHtml(text: string): string {
  * - 토스 앱: 실제 광고 시청 후 리포트 해금
  * - 로컬/웹: 자동 해금 (개발 편의)
  */
-export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile: UserProfile, fortune: FortuneResult | null, onBackToday: () => void }) {
+export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchAsFriend }: {
+    profile: UserProfile,
+    fortune: FortuneResult | null,
+    onBackToday: () => void,
+    onAddMatchAsFriend?: (friend: UserProfile) => void
+}) {
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
+    const [isMatchAdded, setIsMatchAdded] = useState(false);  // 꿍친 추가 여부
 
     // 광고 훅 (토스/웹 자동 분기)
     const { loading, showRewardAd } = useRewardedAd();
@@ -100,10 +106,12 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
 
         const shareText = `${shareContent.title}\n\n${shareContent.text}`;
 
+        // 토스 앱: OG 이미지 + 딥링크로 공유
+        // 웹: 클립보드 복사
         const result = await tossShare({
             message: shareText,
             deepLinkPath: 'premium-report',
-            ogImageUrl: undefined  // TODO: OG 이미지 URL 추가 가능
+            ogImageUrl: matchImageUrl || undefined  // 운명의 짝꿍 이미지를 OG 이미지로 사용
         });
 
         if (result === 'copied') {
@@ -111,6 +119,25 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
         } else if (result === 'failed') {
             alert('공유하기에 실패했습니다.');
         }
+    };
+
+    // 운명의 짝꿍을 꿍친으로 추가
+    const handleAddMatchAsFriend = () => {
+        if (!matchPrompt || !onAddMatchAsFriend) return;
+
+        const matchFriend: UserProfile = {
+            id: '',  // App.tsx에서 새 ID 부여
+            nickname: matchPrompt.title || '운명의 짝꿍',
+            birthDate: '',
+            birthTime: '',
+            gender: matchPrompt.gender === 'male' ? 'male' : 'female',
+            relationshipStatus: '',
+            avatarUrl: matchImageUrl  // 짝꿍 이미지를 아바타로 저장
+        };
+
+        onAddMatchAsFriend(matchFriend);
+        setIsMatchAdded(true);
+        alert(`${matchFriend.nickname}을(를) 꿍친으로 추가했습니다!`);
     };
 
     // Guards
@@ -200,6 +227,47 @@ export function PremiumReportScreen({ profile, fortune, onBackToday }: { profile
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* 꿍친으로 추가 버튼 */}
+                    {matchPrompt && onAddMatchAsFriend && !isMatchAdded && (
+                        <button
+                            onClick={handleAddMatchAsFriend}
+                            style={{
+                                width: "100%",
+                                height: 56,
+                                borderRadius: 18,
+                                border: "2px dashed #3182f6",
+                                fontSize: 16,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                backgroundColor: "#f0f7ff",
+                                color: "#3182f6",
+                                marginBottom: 12,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 8
+                            }}
+                        >
+                            <span style={{ fontSize: 20 }}>💕</span>
+                            꿍친 리스트에 추가하기
+                        </button>
+                    )}
+
+                    {isMatchAdded && (
+                        <div style={{
+                            width: "100%",
+                            padding: "16px",
+                            borderRadius: 18,
+                            backgroundColor: "#e8f5e9",
+                            color: "#2e7d32",
+                            marginBottom: 12,
+                            textAlign: "center",
+                            fontWeight: 600
+                        }}>
+                            ✅ 꿍친에 추가되었습니다!
                         </div>
                     )}
 

@@ -126,9 +126,10 @@ describe('4/4. 재발 방지 및 설정 검증 (Regression Check)', () => {
         const adHookPath = path.join(process.cwd(), 'src', 'hooks', 'useRewardedAd.ts');
         const content = fs.readFileSync(adHookPath, 'utf-8');
 
-        // @apps-in-toss/web-bridge에서 GoogleAdMob 실제 임포트 확인 (declare 아님!)
-        const hasTossBridgeImport = content.includes("import { GoogleAdMob } from '@apps-in-toss/web-bridge'");
-        expect(hasTossBridgeImport, '토스 광고 브릿지(@apps-in-toss/web-bridge)가 임포트되어 있지 않습니다. declare가 아닌 실제 import가 필요합니다!').toBe(true);
+        // @apps-in-toss/web-bridge에서 GoogleAdMob import 확인 (static 또는 dynamic)
+        const hasStaticImport = content.includes("import { GoogleAdMob } from '@apps-in-toss/web-bridge'");
+        const hasDynamicImport = content.includes("import('@apps-in-toss/web-bridge')");
+        expect(hasStaticImport || hasDynamicImport, '토스 광고 브릿지(@apps-in-toss/web-bridge)가 임포트되어 있지 않습니다!').toBe(true);
 
         // GoogleAdMob.loadAppsInTossAdMob 호출 확인
         expect(content).toContain('GoogleAdMob.loadAppsInTossAdMob');

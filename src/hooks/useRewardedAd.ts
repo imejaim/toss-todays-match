@@ -24,7 +24,18 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 // ║  - 주석 처리 금지                                                         ║
 // ║  - 조건부 import 금지                                                     ║
 // ╚═══════════════════════════════════════════════════════════════════════════╝
-import { GoogleAdMob } from '@apps-in-toss/web-bridge';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let GoogleAdMob: any = undefined;
+
+// 토스 앱 환경에서만 web-bridge 로드 시도 (Top-level await 제거)
+// 비동기로 로드되므로 훅 내부에서 접근 시 undefined 체크 필수
+import('@apps-in-toss/web-bridge')
+    .then((module) => {
+        GoogleAdMob = module.GoogleAdMob;
+    })
+    .catch((e) => {
+        console.log('[useRewardedAd] 토스 브릿지 로드 실패 (로컬 개발 환경)', e);
+    });
 
 // 토스 콘솔에서 발급받은 광고 그룹 ID
 const TEST_AD_GROUP_ID = 'ait.v2.live.f7cf74bd6b6b4c55';

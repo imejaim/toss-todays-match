@@ -190,6 +190,7 @@ function App() {
                 profile={profile}
                 fortune={fortune}
                 onBackToday={() => navigate("/today-fortune")}
+                onAddMatchAsFriend={handleAddFriend}
               />
             ) : (
               <div style={{ padding: 20 }}>Loading...</div>

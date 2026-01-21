@@ -270,13 +270,23 @@ export default function HomeScreen({
                                                 width: 48,
                                                 height: 48,
                                                 borderRadius: "50%",
-                                                backgroundColor: fChar.mainColor,
+                                                backgroundColor: friend.avatarUrl ? "#fff" : fChar.mainColor,
                                                 display: "flex",
                                                 alignItems: "center",
                                                 justifyContent: "center",
-                                                fontSize: 24
+                                                fontSize: 24,
+                                                overflow: "hidden",
+                                                border: friend.avatarUrl ? "2px solid #3182f6" : "none"
                                             }}>
-                                                {getZodiacEmoji(fChar.species)}
+                                                {friend.avatarUrl ? (
+                                                    <img
+                                                        src={friend.avatarUrl}
+                                                        alt={friend.nickname}
+                                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                    />
+                                                ) : (
+                                                    getZodiacEmoji(fChar.species)
+                                                )}
                                             </div>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

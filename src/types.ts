@@ -50,6 +50,7 @@ export interface UserProfile {
     saju?: SajuResult;
     humanDesign?: HumanDesignProfile;
     enneagram?: EnneagramProfile;
+    avatarUrl?: string;  // 운명의 짝꿍 이미지 URL
     customization?: {
         preferredSpecies?: string;
         adjective?: string;
