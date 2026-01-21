@@ -1,8 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-
-// GoogleAdMob은 토스 앱에서만 사용 가능 - 타입만 정의
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const GoogleAdMob: any;
+// ⚠️ 삭제 금지: 토스 앱에서 광고가 작동하려면 반드시 실제 import 필요 (RULEBOOK 10.1)
+import { GoogleAdMob } from '@apps-in-toss/web-bridge';
 
 // 토스 콘솔에서 발급받은 광고 그룹 ID
 const TEST_AD_GROUP_ID = 'ait.v2.live.f7cf74bd6b6b4c55';
