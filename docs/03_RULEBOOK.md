@@ -157,5 +157,37 @@ import { GoogleAdMob } from '@apps-in-toss/web-bridge';
 
 ---
 
+## 📱 11. 토스 UI 가이드라인 (Toss UI Guidelines)
+
+> ⚠️ **2026-01-23 심사 반려 이후 추가된 규칙입니다.**
+
+### 11.1 시스템 알럿(alert) 사용 금지
+```typescript
+// ❌ 금지 - 브라우저 시스템 알럿은 토스 디자인과 맞지 않음
+alert("닉네임을 입력해주세요.");
+
+// ✅ 필수 - Toast 컴포넌트 사용
+import { useToast } from "../components/Toast";
+const { showToast } = useToast();
+showToast("닉네임을 입력해주세요.");
+```
+
+### 11.2 안드로이드 Tap Highlight 제거
+클릭 가능한 모든 요소에 다음 CSS 속성 추가:
+```typescript
+const clickableStyle: React.CSSProperties = {
+    // ... 기타 스타일
+    WebkitTapHighlightColor: "transparent"  // 필수!
+};
+```
+
+### 11.3 QC 자동 검증 항목
+`qc.test.ts`가 다음을 자동 검증합니다:
+- [ ] 페이지 파일에서 `alert(` 패턴이 없을 것
+- [ ] `Home.tsx`에 `WebkitTapHighlightColor` 속성이 있을 것
+
+---
+
 *이 문서가 업데이트되면 에이전트는 즉시 숙지해야 합니다.*
+
 

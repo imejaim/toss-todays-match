@@ -174,4 +174,34 @@ describe('5/5. 토스 규정 및 변수명 준수 (Toss Compliance)', () => {
             expect(content).not.toContain('←');
         });
     });
+
+    /**
+     * 🚨 [2026-01-23 반려] 토스 심사 가이드라인 위반 방지 테스트
+     * - alert()는 시스템 알럿이므로 TDS 스타일 Toast/Modal로 대체해야 함
+     * - 안드로이드에서 파란색 tap-highlight가 나오면 안 됨
+     */
+    it('페이지에서 시스템 alert()를 사용하면 안 된다 (TDS Modal/Toast 사용)', () => {
+        const pages = ['Profile.tsx', 'PremiumReport.tsx', 'Home.tsx', 'TodayFortune.tsx'];
+
+        pages.forEach(page => {
+            const filePath = path.join(process.cwd(), 'src', 'pages', page);
+            if (!fs.existsSync(filePath)) return;
+            const content = fs.readFileSync(filePath, 'utf-8');
+
+            // 주석 제외하고 alert( 패턴 검사
+            const codeWithoutComments = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+            const hasAlert = /\balert\s*\(/.test(codeWithoutComments);
+            expect(hasAlert, `${page}에서 alert()가 발견되었습니다. showToast()를 사용하세요.`).toBe(false);
+        });
+    });
+
+    it('클릭 가능한 요소에 WebkitTapHighlightColor 설정이 있어야 한다 (안드로이드 파란색 박스 방지)', () => {
+        const homePath = path.join(process.cwd(), 'src', 'pages', 'Home.tsx');
+        if (!fs.existsSync(homePath)) return;
+        const content = fs.readFileSync(homePath, 'utf-8');
+
+        // friendCardStyle에 tap-highlight 설정 확인
+        expect(content).toContain('WebkitTapHighlightColor');
+    });
 });
+
