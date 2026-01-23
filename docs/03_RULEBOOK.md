@@ -186,6 +186,36 @@ const clickableStyle: React.CSSProperties = {
 - [ ] 페이지 파일에서 `alert(` 패턴이 없을 것
 - [ ] `Home.tsx`에 `WebkitTapHighlightColor` 속성이 있을 것
 
+### 10.4 광고 구현 패턴 (필수)
+`useRewardedAd` 훅의 `showRewardAd` 함수는 Promise를 반환하지 않습니다. 반드시 **콜백 방식**을 사용해야 합니다.
+
+```typescript
+// ❌ 금지 - await 사용 시 아무 반응 없음
+const result = await showRewardAd(); 
+
+// ✅ 필수 - 콜백 객체 전달
+showRewardAd({
+    onRewarded: () => { /* 보상 로직 */ },
+    onDismiss: () => { /* 닫힘 로직 */ }
+});
+```
+
+### 10.5 공유 기능 구현 규칙
+- `share.ts` 등에서 URL을 하드코딩하지 마십시오 (예: `toss.im/fake-url` 금지).
+- 반드시 `window.location.href`를 사용하거나, 검증된 실제 배포 URL을 환경 변수로 사용해야 합니다.
+
+---
+
+## 🎭 12. 시나리오 기반 검증 (Scenario Verification)
+
+> ⚠️ **2026-01-23 기능 추가 시 필수 절차입니다.**
+
+### 12.1 테스트 시나리오 문서화
+새로운 기능을 개발할 때는 `docs/08_TEST_SCENARIOS.md`에 사용자 행동 흐름과 검증 포인트를 먼저 작성해야 합니다.
+
+### 12.2 회귀 방지 QC 테스트
+작성된 시나리오의 핵심 로직(특히 광고/결제 등 수익과 직결된 부분)은 반드시 `qc.test.ts`에 자동 검증 코드로 반영해야 합니다.
+
 ---
 
 *이 문서가 업데이트되면 에이전트는 즉시 숙지해야 합니다.*

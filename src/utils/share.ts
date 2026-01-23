@@ -24,6 +24,9 @@ export function createFortuneShareContent(
 
     const scoreEmoji = score >= 90 ? "🌟" : score >= 75 ? "💕" : score >= 50 ? "✨" : "🍀";
 
+    // 현재 페이지 URL 사용 (없으면 기본값)
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : "https://toss.im";
+
     return {
         title: `${nickname}님의 오늘의 연애 운세`,
         text: `${scoreEmoji} ${nickname}님의 오늘 연애 점수: ${score}점!
@@ -31,7 +34,7 @@ export function createFortuneShareContent(
 ${keywords}
 
 나도 오늘의 연애 운세 확인하러 가기 👇`,
-        url: "https://toss.im/todays-match" // 실제 앱 링크로 교체 필요
+        url: currentUrl
     };
 }
 
@@ -47,6 +50,9 @@ export function createMatchShareContent(
     const genderWord = matchGender === "female" ? "그녀" : "그";
     const keywords = fortune.keywords.slice(0, 2).map(k => `#${k}`).join(" ");
 
+    // 현재 페이지 URL 사용
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : "https://toss.im";
+
     return {
         title: `${nickname}님의 오늘의 운명 짝꿍`,
         text: `💕 오늘 만날 수 있는 ${genderWord}의 모습!
@@ -54,7 +60,7 @@ export function createMatchShareContent(
 ${keywords} #오늘의운명짝꿍
 
 나도 오늘의 운명 짝꿍 확인하러 가기 👇`,
-        url: "https://toss.im/todays-match"
+        url: currentUrl
     };
 }
 

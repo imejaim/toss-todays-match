@@ -203,5 +203,43 @@ describe('5/5. 토스 규정 및 변수명 준수 (Toss Compliance)', () => {
         // friendCardStyle에 tap-highlight 설정 확인
         expect(content).toContain('WebkitTapHighlightColor');
     });
+
+    /**
+     * 🚨 [2026-01-23 회귀 방지] 광고 및 공유 시나리오 검증
+     * - 광고 호출 시 Promise(await)가 아닌 Callback 방식을 써야 함
+     * - 공유 URL은 하드코딩된 가짜 URL을 쓰면 안 됨
+     */
+    it('광고 호출(showRewardAd)은 반드시 콜백 객체를 사용해야 한다 (await 금지)', () => {
+        const pages = ['Profile.tsx', 'PremiumReport.tsx'];
+
+        pages.forEach(page => {
+            const filePath = path.join(process.cwd(), 'src', 'pages', page);
+            if (!fs.existsSync(filePath)) return;
+            const content = fs.readFileSync(filePath, 'utf-8');
+
+            // 주석 제외
+            const code = content.replace(/\/\/.*$/gm, '');
+
+            // await showRewardAd() 패턴이 있으면 실패
+            const hasAwaitCall = /await\s+showRewardAd\s*\(/.test(code);
+            expect(hasAwaitCall, `${page}에서 await showRewardAd()가 발견되었습니다. showRewardAd({ onRewarded: ... }) 콜백 방식을 사용하세요.`).toBe(false);
+
+            // showRewardAd({ 패턴이 있어야 함 (콜백 객체 전달)
+            const hasCallbackCall = /showRewardAd\s*\(\s*{/.test(code);
+            expect(hasCallbackCall, `${page}에서 showRewardAd에 콜백 객체를 전달하지 않았습니다.`).toBe(true);
+        });
+    });
+
+    it('공유 기능(share.ts)에 존재하지 않는 하드코딩 URL이 없어야 한다', () => {
+        const filePath = path.join(process.cwd(), 'src', 'utils', 'share.ts');
+        if (!fs.existsSync(filePath)) return;
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        // https://toss.im/todays-match 문자열이 하드코딩 되어 있으면 경고 (404 원인)
+        // 단, 주석이나 window.location fallback 등은 허용해야 하므로 "url: " 뒤에 직접 오는 경우만 체크
+
+        const hasHardcodedUrl = /url:\s*["']https:\/\/toss\.im\/todays-match["']/.test(content);
+        expect(hasHardcodedUrl, 'share.ts에 404를 유발하는 하드코딩된 URL이 있습니다. window.location.href를 사용하세요.').toBe(false);
+    });
 });
 

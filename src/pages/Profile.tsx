@@ -115,31 +115,34 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
     };
 
     // 운명 이미지 생성 핸들러
-    const handleGenerateImage = async () => {
+    const handleGenerateImage = () => {
         if (!nickname || !birthDate) {
             showToast("닉네임과 생년월일을 먼저 입력해주세요.");
             return;
         }
 
-        // 광고 시청
-        const rewarded = await showRewardAd();
-        if (!rewarded) {
-            showToast("광고 시청을 완료해야 이미지를 생성할 수 있어요.");
-            return;
-        }
+        // 광고 시청 요청
+        showRewardAd({
+            onRewarded: () => {
+                showToast("광고 보상 확인! 이미지를 생성합니다...");
 
-        // 임시 프로필로 이미지 URL 생성
-        const tempProfile: UserProfile = {
-            ...initialProfile,
-            nickname,
-            birthDate,
-            birthTime: isTimeUnknown ? "unknown" : birthTime,
-            gender,
-            relationshipStatus
-        };
-        const imageUrl = generateProfileImageUrl(tempProfile);
-        setAvatarUrl(imageUrl);
-        showToast("운명 이미지가 생성되었어요! 프로필을 저장해주세요.");
+                // 임시 프로필로 이미지 URL 생성
+                const tempProfile: UserProfile = {
+                    ...initialProfile,
+                    nickname,
+                    birthDate,
+                    birthTime: isTimeUnknown ? "unknown" : birthTime,
+                    gender,
+                    relationshipStatus
+                };
+                const imageUrl = generateProfileImageUrl(tempProfile);
+                setAvatarUrl(imageUrl);
+                showToast("운명 이미지가 생성되었어요! 프로필을 저장해주세요.");
+            },
+            onDismiss: () => {
+                showToast("광고를 끝까지 보셔야 이미지를 생성할 수 있어요.");
+            }
+        });
     };
 
     // 셀렉트 스타일
