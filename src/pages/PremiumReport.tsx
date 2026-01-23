@@ -6,6 +6,7 @@ import { getDetailedFortune } from "../utils/llm";
 import { generateMatchImagePrompt, generateMatchDescription } from "../utils/matchImageGenerator";
 import { getTodayEnergy } from "../utils/dailyEnergy";
 import { createMatchShareContent } from "../utils/share";
+import { useToast } from "../components/Toast";
 
 /**
  * 간단한 마크다운을 HTML로 변환 (엔진 없이 기본 문법만 처리)
@@ -45,6 +46,9 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
 
     // 공유 훅 (토스/웹 자동 분기)
     const { share: tossShare } = useTossShare();
+
+    // 토스트 훅
+    const { showToast } = useToast();
 
     // 1. Data Calculation
     const dailyEnergy = useMemo(() => getTodayEnergy(), []);
@@ -115,9 +119,9 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
         });
 
         if (result === 'copied') {
-            alert('링크가 복사되었습니다!');
+            showToast('링크가 복사되었습니다!');
         } else if (result === 'failed') {
-            alert('공유하기에 실패했습니다.');
+            showToast('공유하기에 실패했습니다.');
         }
     };
 
@@ -137,7 +141,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
 
         onAddMatchAsFriend(matchFriend);
         setIsMatchAdded(true);
-        alert(`${matchFriend.nickname}을(를) 꿍친으로 추가했습니다!`);
+        showToast(`${matchFriend.nickname}을(를) 꿍친으로 추가했습니다!`);
     };
 
     // Guards

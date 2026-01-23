@@ -6,6 +6,7 @@ import {
     Checkbox
 } from "../components/ui";
 import { analyzeInnateCharacter } from "../utils/innateCharacter";
+import { useToast } from "../components/Toast";
 
 interface Props {
     initialProfile: UserProfile;
@@ -79,9 +80,11 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
         }
     }, [nickname, birthDate, birthTime, isTimeUnknown, gender, relationshipStatus]);
 
+    const { showToast } = useToast();
+
     const handleCheckEnergy = () => {
         if (!nickname) {
-            alert("닉네임을 먼저 입력해주세요.");
+            showToast("닉네임을 먼저 입력해주세요.");
             return;
         }
         setShowEnergyPreview(true);
@@ -89,7 +92,7 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
 
     const handleSave = () => {
         if (!nickname) {
-            alert("닉네임을 입력해주세요.");
+            showToast("닉네임을 입력해주세요.");
             return;
         }
         onSave({

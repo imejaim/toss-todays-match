@@ -130,7 +130,7 @@ export function shareToKakao(content: ShareContent): void {
             shareContent(content);
         } else {
             copyToClipboard(`${content.text}\n${content.url || ""}`);
-            alert("링크가 복사되었습니다!");
+            // alert 제거 - 호출자가 Toast로 처리
         }
         return;
     }

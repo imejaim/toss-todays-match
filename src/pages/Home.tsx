@@ -409,7 +409,8 @@ const cardStyle: React.CSSProperties = {
     padding: "24px",
     marginTop: 32,
     boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-    border: "1px solid #f2f4f6"
+    border: "1px solid #f2f4f6",
+    WebkitTapHighlightColor: "transparent"
 };
 
 const friendCardStyle: React.CSSProperties = {
@@ -419,7 +420,8 @@ const friendCardStyle: React.CSSProperties = {
     padding: "16px",
     backgroundColor: "#f9fafb",
     borderRadius: 20,
-    border: "1px solid #f2f4f6"
+    border: "1px solid #f2f4f6",
+    WebkitTapHighlightColor: "transparent"
 };
 
 const actionBtnStyle: React.CSSProperties = {
@@ -429,5 +431,6 @@ const actionBtnStyle: React.CSSProperties = {
     cursor: "pointer",
     backgroundColor: "#fff",
     borderRadius: 8,
-    border: "1px solid #e5e8eb"
+    border: "1px solid #e5e8eb",
+    WebkitTapHighlightColor: "transparent"
 };

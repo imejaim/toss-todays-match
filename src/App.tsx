@@ -13,6 +13,7 @@ import { calcTodayFortune } from "./utils/fortune";
 import Home from "./pages/Home";
 import { analyzeSaju } from "./utils/sajuEngine";
 import { calculateHumanDesign } from "./utils/hdEngine";
+import { ToastProvider } from "./components/Toast";
 
 function App() {
   // 1. My Profile State
@@ -119,88 +120,90 @@ function App() {
   }, [location.pathname, profile.nickname, navigate]);
 
   return (
-    <div style={styles.app}>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Home
-              profile={profile}
-              friends={friends}
-              onGoProfile={() => navigate("/profile")}
-              onGoTodayFortune={moveToTodayFortune}
-              onAddFriend={() => navigate("/friends/add")}
-              onEditFriend={(id) => navigate(`/friends/edit/${id}`)}
-              onDeleteFriend={handleDeleteFriend}
-            />
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProfileScreen
-              initialProfile={profile}
-              onSave={handleProfileChange}
-              title="내 프로필 수정"
-              ctaLabel="저장하기"
-            />
-          }
-        />
-        <Route
-          path="/friends/add"
-          element={
-            <ProfileScreen
-              initialProfile={{ ...defaultProfile, id: "temp" }}
-              onSave={handleAddFriend}
-              title="새 꿍친 추가"
-              ctaLabel="추가하기"
-              isFriend={true}
-            />
-          }
-        />
-        <Route
-          path="/friends/edit/:id"
-          element={
-            <FriendEditWrapper
-              friends={friends}
-              onUpdate={handleUpdateFriend}
-            />
-          }
-        />
-        <Route
-          path="/today-fortune"
-          element={
-            fortune ? (
-              <TodayFortuneScreen
+    <ToastProvider>
+      <div style={styles.app}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
                 profile={profile}
-                fortune={fortune}
-                onGoPremium={() => navigate("/premium-report")}
-                onBackHome={() => navigate("/")}
+                friends={friends}
+                onGoProfile={() => navigate("/profile")}
+                onGoTodayFortune={moveToTodayFortune}
+                onAddFriend={() => navigate("/friends/add")}
+                onEditFriend={(id) => navigate(`/friends/edit/${id}`)}
+                onDeleteFriend={handleDeleteFriend}
               />
-            ) : (
-              <div style={{ padding: 20 }}>Loading...</div>
-            )
-          }
-        />
-        <Route
-          path="/premium-report"
-          element={
-            fortune ? (
-              <PremiumReportScreen
-                profile={profile}
-                fortune={fortune}
-                onBackToday={() => navigate("/today-fortune")}
-                onAddMatchAsFriend={handleAddFriend}
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProfileScreen
+                initialProfile={profile}
+                onSave={handleProfileChange}
+                title="내 프로필 수정"
+                ctaLabel="저장하기"
               />
-            ) : (
-              <div style={{ padding: 20 }}>Loading...</div>
-            )
-          }
-        />
-        <Route path="/terms" element={<TermsScreen />} />
-        <Route path="/privacy" element={<PrivacyScreen />} />
-      </Routes>
-    </div>
+            }
+          />
+          <Route
+            path="/friends/add"
+            element={
+              <ProfileScreen
+                initialProfile={{ ...defaultProfile, id: "temp" }}
+                onSave={handleAddFriend}
+                title="새 꿍친 추가"
+                ctaLabel="추가하기"
+                isFriend={true}
+              />
+            }
+          />
+          <Route
+            path="/friends/edit/:id"
+            element={
+              <FriendEditWrapper
+                friends={friends}
+                onUpdate={handleUpdateFriend}
+              />
+            }
+          />
+          <Route
+            path="/today-fortune"
+            element={
+              fortune ? (
+                <TodayFortuneScreen
+                  profile={profile}
+                  fortune={fortune}
+                  onGoPremium={() => navigate("/premium-report")}
+                  onBackHome={() => navigate("/")}
+                />
+              ) : (
+                <div style={{ padding: 20 }}>Loading...</div>
+              )
+            }
+          />
+          <Route
+            path="/premium-report"
+            element={
+              fortune ? (
+                <PremiumReportScreen
+                  profile={profile}
+                  fortune={fortune}
+                  onBackToday={() => navigate("/today-fortune")}
+                  onAddMatchAsFriend={handleAddFriend}
+                />
+              ) : (
+                <div style={{ padding: 20 }}>Loading...</div>
+              )
+            }
+          />
+          <Route path="/terms" element={<TermsScreen />} />
+          <Route path="/privacy" element={<PrivacyScreen />} />
+        </Routes>
+      </div>
+    </ToastProvider>
   );
 }
 
