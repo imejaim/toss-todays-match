@@ -8,8 +8,9 @@ import { analyzeInnateCharacter } from "../utils/innateCharacter";
 import { getTodayEnergy, analyzeInteraction, getDailyTheme } from "../utils/dailyEnergy";
 import { InnateCharacterCard } from "../components/InnateCharacterCard";
 import { TodayEnergyCard } from "../components/TodayEnergyCard";
-import { ShareButtons } from "../components/ShareButtons";
-import { createFortuneShareContent } from "../utils/share";
+
+import { shareFortune } from "../utils/share";
+import { useToast } from "../components/Toast";
 
 // Get zodiac emoji from species
 function getZodiacEmoji(species: string): string {
@@ -43,9 +44,12 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
 
     // 오늘의 운명 짝꿍 정보는 PremiumReport에서만 사용 (TodayFortune에서는 티저만 표시)
 
-    // 공유 콘텐츠
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const shareContent = createFortuneShareContent(profile, fortune);
+    const { showToast } = useToast();
+
+    const handleShare = async () => {
+        const result = await shareFortune(profile, fortune);
+        if (result === 'copied') showToast('링크가 복사되었습니다!');
+    };
 
     return (
         <div style={{ backgroundColor: "#fff", minHeight: "100vh", paddingBottom: 110 }}>
@@ -146,7 +150,15 @@ export function TodayFortuneScreen({ profile, fortune, onGoPremium, onBackHome }
                     </Button>
 
                     {/* 공유 버튼 */}
-                    <ShareButtons content={shareContent} />
+                    {/* 공유 버튼 */}
+                    <Button
+                        variant="fill"
+                        color="secondary"
+                        onClick={handleShare}
+                        style={{ width: "100%", height: 52, fontSize: 17, fontWeight: 700, borderRadius: 16, backgroundColor: "#e8f3ff", color: "#1b64da" }}
+                    >
+                        친구에게 공유하기
+                    </Button>
 
                     <Button
                         variant="weak"

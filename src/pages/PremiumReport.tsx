@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from "react";
 import type { UserProfile, FortuneResult } from "../types";
 import { useRewardedAd } from "../hooks/useRewardedAd";
-import { useTossShare } from "../hooks/useTossShare";
+// useTossShare 제거
 import { getDetailedFortune } from "../utils/llm";
 import { generateMatchImagePrompt, generateMatchDescription } from "../utils/matchImageGenerator";
 import { getTodayEnergy } from "../utils/dailyEnergy";
-import { createMatchShareContent } from "../utils/share";
+import { shareMatch } from "../utils/share";
 import { useToast } from "../components/Toast";
 
 /**
@@ -44,8 +44,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
     // 광고 훅 (토스/웹 자동 분기)
     const { loading, showRewardAd } = useRewardedAd();
 
-    // 공유 훅 (토스/웹 자동 분기)
-    const { share: tossShare } = useTossShare();
+    // 공유 훅 (토스/웹 자동 분기) - share utils 사용으로 대체됨
 
     // 토스트 훅
     const { showToast } = useToast();
@@ -74,10 +73,7 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
         return `${GITHUB_IMAGE_BASE}/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_${variantStr}.png`;
     }, [matchPrompt]);
 
-    const shareContent = useMemo(() => {
-        if (!profile || !fortune || !matchPrompt) return null;
-        return createMatchShareContent(profile, fortune, matchPrompt.gender);
-    }, [profile, fortune, matchPrompt]);
+    // shareContent useMemo 제거됨
 
     // 2. 광고 시청 후 리포트 해금
     const handleUnlock = () => {
@@ -106,17 +102,9 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
     };
 
     const handleShare = async () => {
-        if (!shareContent) return;
+        if (!matchPrompt) return;
 
-        const shareText = `${shareContent.title}\n\n${shareContent.text}`;
-
-        // 토스 앱: OG 이미지 + 딥링크로 공유
-        // 웹: 클립보드 복사
-        const result = await tossShare({
-            message: shareText,
-            deepLinkPath: 'premium-report',
-            ogImageUrl: matchImageUrl || undefined  // 운명의 짝꿍 이미지를 OG 이미지로 사용
-        });
+        const result = await shareMatch(profile, fortune!, matchPrompt.gender, matchImageUrl || undefined);
 
         if (result === 'copied') {
             showToast('링크가 복사되었습니다!');
