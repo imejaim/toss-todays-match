@@ -80,15 +80,24 @@ export default function HomeScreen({
                             width: 64,
                             height: 64,
                             borderRadius: "50%",
-                            backgroundColor: character ? character.mainColor : "#f2f4f6",
+                            backgroundColor: profile.avatarUrl ? "#fff" : (character ? character.mainColor : "#f2f4f6"),
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             fontSize: 32,
-                            border: "3px solid #fff",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                            border: profile.avatarUrl ? "3px solid #3182f6" : "3px solid #fff",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                            overflow: "hidden"
                         }}>
-                            {zodiacEmoji}
+                            {profile.avatarUrl ? (
+                                <img
+                                    src={profile.avatarUrl}
+                                    alt="내 프로필"
+                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                            ) : (
+                                zodiacEmoji
+                            )}
                         </div>
                         <div style={{ flex: 1 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

@@ -236,10 +236,30 @@ describe('5/5. 토스 규정 및 변수명 준수 (Toss Compliance)', () => {
         const content = fs.readFileSync(filePath, 'utf-8');
 
         // https://toss.im/todays-match 문자열이 하드코딩 되어 있으면 경고 (404 원인)
-        // 단, 주석이나 window.location fallback 등은 허용해야 하므로 "url: " 뒤에 직접 오는 경우만 체크
 
         const hasHardcodedUrl = /url:\s*["']https:\/\/toss\.im\/todays-match["']/.test(content);
         expect(hasHardcodedUrl, 'share.ts에 404를 유발하는 하드코딩된 URL이 있습니다. window.location.href를 사용하세요.').toBe(false);
+    });
+
+    it('Home.tsx 내 프로필 카드에 avatarUrl 적용 로직이 있어야 한다', () => {
+        const filePath = path.join(process.cwd(), 'src', 'pages', 'Home.tsx');
+        if (!fs.existsSync(filePath)) return;
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        const hasAvatarCheck = /profile\.avatarUrl\s*\?/.test(content);
+        const hasImgTag = content.includes('<img');
+
+        expect(hasAvatarCheck, 'Home.tsx 내 프로필 카드에 avatarUrl 적용 로직이 누락되었습니다.').toBe(true);
+        expect(hasImgTag, 'Home.tsx에 이미지 태그가 없습니다.').toBe(true);
+    });
+
+    it('share.ts에 안전한 URL 변환 로직(getSafeUrl)이 있어야 한다', () => {
+        const filePath = path.join(process.cwd(), 'src', 'utils', 'share.ts');
+        if (!fs.existsSync(filePath)) return;
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        expect(content).toContain('getSafeUrl');
+        expect(content).toContain('private-apps.tossmini.com');
     });
 });
 
