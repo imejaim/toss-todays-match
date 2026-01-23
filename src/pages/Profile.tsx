@@ -7,6 +7,8 @@ import {
 } from "../components/ui";
 import { analyzeInnateCharacter } from "../utils/innateCharacter";
 import { useToast } from "../components/Toast";
+import { generateProfileImageUrl } from "../utils/matchImageGenerator";
+import { useRewardedAd } from "../hooks/useRewardedAd";
 
 interface Props {
     initialProfile: UserProfile;
@@ -45,6 +47,12 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
 
     // 에너지 미리보기 표시 상태
     const [showEnergyPreview, setShowEnergyPreview] = useState(false);
+
+    // 아바타 이미지 URL 상태
+    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialProfile.avatarUrl);
+
+    // 광고 훅
+    const { loading: adLoading, showRewardAd } = useRewardedAd();
 
     // 생년월일 문자열 생성
     const birthDate = `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`;
@@ -101,8 +109,37 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
             birthDate,
             birthTime: isTimeUnknown ? "unknown" : birthTime,
             gender,
-            relationshipStatus
+            relationshipStatus,
+            avatarUrl  // 이미지 URL도 저장
         });
+    };
+
+    // 운명 이미지 생성 핸들러
+    const handleGenerateImage = async () => {
+        if (!nickname || !birthDate) {
+            showToast("닉네임과 생년월일을 먼저 입력해주세요.");
+            return;
+        }
+
+        // 광고 시청
+        const rewarded = await showRewardAd();
+        if (!rewarded) {
+            showToast("광고 시청을 완료해야 이미지를 생성할 수 있어요.");
+            return;
+        }
+
+        // 임시 프로필로 이미지 URL 생성
+        const tempProfile: UserProfile = {
+            ...initialProfile,
+            nickname,
+            birthDate,
+            birthTime: isTimeUnknown ? "unknown" : birthTime,
+            gender,
+            relationshipStatus
+        };
+        const imageUrl = generateProfileImageUrl(tempProfile);
+        setAvatarUrl(imageUrl);
+        showToast("운명 이미지가 생성되었어요! 프로필을 저장해주세요.");
     };
 
     // 셀렉트 스타일
@@ -365,6 +402,58 @@ export function ProfileScreen({ initialProfile, onSave, title = "프로필 정�
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* 운명 이미지 생성 섹션 */}
+            <div style={{
+                backgroundColor: "#f9fafb",
+                borderRadius: 20,
+                padding: 20,
+                marginTop: 32,
+                textAlign: "center"
+            }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#333d4b", marginBottom: 12 }}>
+                    ✨ {isFriend ? "꿍친" : "나의"} 운명 이미지
+                </div>
+
+                {avatarUrl ? (
+                    <div style={{ marginBottom: 16 }}>
+                        <img
+                            src={avatarUrl}
+                            alt="운명 이미지"
+                            style={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                border: "3px solid #3182f6",
+                                boxShadow: "0 4px 12px rgba(49, 130, 246, 0.3)"
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <p style={{ fontSize: 14, color: "#8b95a1", marginBottom: 16 }}>
+                        광고를 시청하고 사주 기반 운명 이미지를 만들어 보세요!
+                    </p>
+                )}
+
+                <Button
+                    onClick={handleGenerateImage}
+                    disabled={adLoading}
+                    style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: "#fff",
+                        border: "none",
+                        padding: "12px 24px",
+                        borderRadius: 12,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: adLoading ? "not-allowed" : "pointer",
+                        opacity: adLoading ? 0.6 : 1
+                    }}
+                >
+                    {adLoading ? "로딩 중..." : avatarUrl ? "🔄 이미지 새로 만들기" : "🎬 광고 보고 이미지 만들기"}
+                </Button>
             </div>
 
             <FixedBottomCTA onClick={handleSave}>

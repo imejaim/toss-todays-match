@@ -460,3 +460,34 @@ export function generateMatchDescription(
 
     return `오늘 ${todaySign}의 기운과 함께 ${matchTrait} ${genderWord}가 나타날 수 있어요. ${moodDesc} #${matchElementName.replace(/[()]/g, '')} #오늘의운명짝꿍`;
 }
+
+/**
+ * 프로필 운명 이미지 URL 생성
+ * GitHub에서 사주 기반 이미지를 가져옴
+ */
+export function generateProfileImageUrl(profile: UserProfile): string {
+    // 성별 결정
+    const gender = profile.gender === 'female' ? 'female' : 'male';
+
+    // 오행 결정 (사주에서 일간 오행 사용)
+    let element: SajuElement = 'Fire'; // 기본값
+    if (profile.saju?.dayMaster?.element) {
+        element = profile.saju.dayMaster.element;
+    } else if (profile.birthDate) {
+        // 생년월일로 사주 계산
+        const calculatedSaju = analyzeSaju(profile.birthDate, profile.birthTime || '12:00');
+        element = calculatedSaju.dayMaster.element;
+    }
+
+    // 오행을 소문자로 변환
+    const elementLower = element.toLowerCase();
+
+    // 랜덤 변형 선택 (01, 02, 03)
+    const variants = ['01', '02', '03'];
+    const variant = variants[Math.floor(Math.random() * variants.length)];
+
+    // GitHub Raw URL 생성
+    const baseUrl = 'https://raw.githubusercontent.com/imejaim/toss-todays-match/main/public/match_images';
+    return `${baseUrl}/${gender}/${elementLower}_${variant}.png`;
+}
+
