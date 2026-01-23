@@ -65,34 +65,37 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
     // GitHub에서 이미지 로드 (이미지 추가 시 앱 재출시 불필요)
     const GITHUB_IMAGE_BASE = 'https://raw.githubusercontent.com/imejaim/toss-todays-match/main/public';
 
+    // 4. Random Variant (State for consistency)
+    const [variant] = useState(() => Math.floor(Math.random() * 3) + 1);
+
     const matchImageUrl = useMemo(() => {
         if (!matchPrompt) return "";
-        // 1~3 사이 랜덤 선택 (이미지 바리에이션)
-        const variant = Math.floor(Math.random() * 3) + 1;
         const variantStr = variant.toString().padStart(2, '0');
         return `${GITHUB_IMAGE_BASE}/match_images/${matchPrompt.gender}/${matchPrompt.matchElement.toLowerCase()}_${variantStr}.png`;
-    }, [matchPrompt]);
+    }, [matchPrompt, variant]);
 
     // shareContent useMemo 제거됨
+
+    const fetchReport = async () => {
+        try {
+            const content = await getDetailedFortune(profile, fortune!);
+            setReportContent(content);
+        } catch (error) {
+            console.error("[PremiumReport] 리포트 생성 실패:", error);
+            setReportContent("보고서를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    };
 
     // 2. 광고 시청 후 리포트 해금
     const handleUnlock = () => {
         setIsGenerating(true);
 
         showRewardAd({
-            onRewarded: async () => {
-                console.log("[PremiumReport] 광고 보상 받음 - 리포트 생성 시작");
-                try {
-                    const content = await getDetailedFortune(profile, fortune!);
-                    setReportContent(content);
-                    setIsUnlocked(true);
-                } catch (error) {
-                    console.error("[PremiumReport] 리포트 생성 실패:", error);
-                    setReportContent("보고서를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-                    setIsUnlocked(true);
-                } finally {
-                    setIsGenerating(false);
-                }
+            onRewarded: () => {
+                console.log("[PremiumReport] 광고 보상 받음 - 즉시 잠금 해제");
+                setIsUnlocked(true); // 화면 즉시 전환
+                setIsGenerating(false);
+                fetchReport(); // 백그라운드 데이터 로딩
             },
             onDismiss: () => {
                 console.log("[PremiumReport] 광고 닫힘");
@@ -185,10 +188,18 @@ export function PremiumReportScreen({ profile, fortune, onBackToday, onAddMatchA
                 <div style={{ maxWidth: 500, margin: "0 auto" }}>
                     <div style={{ marginBottom: 32 }}>
                         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: "#191f28" }}>✨ 로맨스 분석 솔루션</h2>
-                        <div
-                            style={{ backgroundColor: "#f2f8ff", borderRadius: 24, padding: "24px", fontSize: 16, lineHeight: 1.8, color: "#333d4b", border: "1px solid #e1eeff" }}
-                            dangerouslySetInnerHTML={{ __html: reportContent ? markdownToHtml(reportContent) : "리포트를 불러오는 중입니다..." }}
-                        />
+                        {reportContent ? (
+                            <div
+                                style={{ backgroundColor: "#f2f8ff", borderRadius: 24, padding: "24px", fontSize: 16, lineHeight: 1.8, color: "#333d4b", border: "1px solid #e1eeff" }}
+                                dangerouslySetInnerHTML={{ __html: markdownToHtml(reportContent) }}
+                            />
+                        ) : (
+                            <div style={{ backgroundColor: "#f9fafb", borderRadius: 24, padding: "40px 24px", textAlign: "center", border: "1px solid #f2f4f6" }}>
+                                <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
+                                <h3 style={{ fontSize: 18, color: "#333d4b", marginBottom: 8 }}>운세를 정밀 분석하고 있어요</h3>
+                                <p style={{ fontSize: 14, color: "#8b95a1" }}>최대 5초 정도 걸릴 수 있습니다...</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* INLINED MATCH CARD */}
